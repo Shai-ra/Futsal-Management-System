@@ -9,16 +9,87 @@ package View;
  * @author WELCOME
  */
 import java.awt.CardLayout;
+import javax.swing.JOptionPane;
+import java.text.SimpleDateFormat; 
+import java.util.Date; 
+import datechooser.beans.DateChooserCombo;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 public class Admin extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Admin.class.getName());
-
+    private static final String USER_DATA_FILE = "users.txt";
+    private Map<String, String[]> users = new HashMap<>();
     /**
      * Creates new form AdminLogin
      */
     public Admin() {
         initComponents();
+        loadUsersFromFile();
+        
     }
+
+private String getDateFromChooser() {
+    try {
+        java.util.Calendar selectedCalendar = DateOfBirth.getSelectedDate();
+        if (selectedCalendar != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            // Calendar has a getTime() method that returns Date
+            return sdf.format(selectedCalendar.getTime());
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return "";
+}
+
+private void loadUsersFromFile() {
+    try {
+        File file = new File(USER_DATA_FILE);
+        if (!file.exists()) {
+            file.createNewFile();
+            return;
+        }
+        
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            String[] parts = line.split(",");
+            if (parts.length >= 4) {
+                users.put(parts[0], new String[]{parts[1], parts[2], parts[3], parts[4]});
+            }
+        }
+        reader.close();
+    } catch (IOException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error loading user data: " + e.getMessage(), 
+                                     "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+private void saveUsersToFile() {
+    try {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(USER_DATA_FILE));
+        for (Map.Entry<String, String[]> entry : users.entrySet()) {
+            String[] userData = entry.getValue();
+            String line = entry.getKey() + "," + 
+                         userData[0] + "," + // password
+                         userData[1] + "," + // firstName
+                         userData[2] + "," + // lastName
+                         userData[3];        // dob
+            writer.write(line);
+            writer.newLine();
+        }
+        writer.close();
+    } catch (IOException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error saving user data: " + e.getMessage(), 
+                                     "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -31,43 +102,157 @@ public class Admin extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         Login = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
+        LoginSignUp = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
-        jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        jPasswordField1 = new javax.swing.JPasswordField();
+        LoginUsername = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
+        LoginPassword = new javax.swing.JPasswordField();
         LoginBtn = new javax.swing.JToggleButton();
         jLabel5 = new javax.swing.JLabel();
-        SignUp = new javax.swing.JToggleButton();
-        jLabel1 = new javax.swing.JLabel();
+        LoginBg = new javax.swing.JLabel();
+        SignUp = new javax.swing.JPanel();
+        jLabel23 = new javax.swing.JLabel();
+        jLabel24 = new javax.swing.JLabel();
+        jLabel26 = new javax.swing.JLabel();
+        jLabel27 = new javax.swing.JLabel();
+        jLabel25 = new javax.swing.JLabel();
+        jLabel28 = new javax.swing.JLabel();
+        jLabel29 = new javax.swing.JLabel();
+        SignUpRetypePw = new javax.swing.JPasswordField();
+        SignUpFirstName = new javax.swing.JTextField();
+        SignUpLastName = new javax.swing.JTextField();
+        SignUpUsername = new javax.swing.JTextField();
+        SignUpPassword = new javax.swing.JPasswordField();
+        SignUpBtn = new javax.swing.JToggleButton();
+        DateOfBirth = new datechooser.beans.DateChooserCombo();
+        LoginBg1 = new javax.swing.JLabel();
         AdminDashboard = new javax.swing.JPanel();
-        DashNav = new javax.swing.JPanel();
+        Nav1 = new javax.swing.JPanel();
         jPanel5 = new javax.swing.JPanel();
-        jLabel7 = new javax.swing.JLabel();
-        DashBoardBtn = new javax.swing.JLabel();
-        ManageTeamBtn = new javax.swing.JLabel();
-        ManagePlayer = new javax.swing.JLabel();
-        BookingBtn = new javax.swing.JLabel();
-        ScheduleBtn = new javax.swing.JLabel();
-        AnnouncementBtn = new javax.swing.JLabel();
-        MainDash = new javax.swing.JPanel();
-        jPanel6 = new javax.swing.JPanel();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel8 = new javax.swing.JLabel();
-        TeamManagement = new javax.swing.JPanel();
-        DashNav2 = new javax.swing.JPanel();
-        jPanel7 = new javax.swing.JPanel();
+        Title1 = new javax.swing.JLabel();
         DashBoardBtn1 = new javax.swing.JLabel();
-        ManagePlayer1 = new javax.swing.JLabel();
+        ManageTeamBtn1 = new javax.swing.JLabel();
+        ManagePlayerBtn1 = new javax.swing.JLabel();
         BookingBtn1 = new javax.swing.JLabel();
         ScheduleBtn1 = new javax.swing.JLabel();
         AnnouncementBtn1 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
-        MainDash2 = new javax.swing.JPanel();
+        Main1 = new javax.swing.JPanel();
+        jPanel6 = new javax.swing.JPanel();
+        jLabel6 = new javax.swing.JLabel();
+        ProfileBtn = new javax.swing.JLabel();
+        jLabel17 = new javax.swing.JLabel();
+        TeamManagement = new javax.swing.JPanel();
+        Nav2 = new javax.swing.JPanel();
+        jPanel19 = new javax.swing.JPanel();
+        Title2 = new javax.swing.JLabel();
+        DashBoardBtn2 = new javax.swing.JLabel();
+        ManageTeamBtn2 = new javax.swing.JLabel();
+        ManagePlayerBtn2 = new javax.swing.JLabel();
+        BookingBtn2 = new javax.swing.JLabel();
+        ScheduleBtn2 = new javax.swing.JLabel();
+        AnnouncementBtn2 = new javax.swing.JLabel();
+        Main2 = new javax.swing.JPanel();
         jPanel10 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        jTextField1 = new javax.swing.JTextField();
+        jTextField3 = new javax.swing.JTextField();
+        jTextField4 = new javax.swing.JTextField();
+        jTextField5 = new javax.swing.JTextField();
+        jButton3 = new javax.swing.JButton();
         jLabel11 = new javax.swing.JLabel();
+        jTextField6 = new javax.swing.JTextField();
+        jLabel12 = new javax.swing.JLabel();
+        jTextField7 = new javax.swing.JTextField();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+        jButton5 = new javax.swing.JButton();
+        jButton6 = new javax.swing.JButton();
+        jButton7 = new javax.swing.JButton();
+        PlayerManagement = new javax.swing.JPanel();
+        Nav3 = new javax.swing.JPanel();
+        jPanel7 = new javax.swing.JPanel();
+        Title3 = new javax.swing.JLabel();
+        DashBoardBtn3 = new javax.swing.JLabel();
+        ManageTeamBtn3 = new javax.swing.JLabel();
+        ManagePlayerBtn3 = new javax.swing.JLabel();
+        BookingBtn3 = new javax.swing.JLabel();
+        ScheduleBtn3 = new javax.swing.JLabel();
+        AnnouncementBtn3 = new javax.swing.JLabel();
+        Main3 = new javax.swing.JPanel();
+        jPanel9 = new javax.swing.JPanel();
+        jLabel13 = new javax.swing.JLabel();
+        jLabel14 = new javax.swing.JLabel();
+        jTextField8 = new javax.swing.JTextField();
+        jLabel15 = new javax.swing.JLabel();
+        jTextField9 = new javax.swing.JTextField();
+        jLabel16 = new javax.swing.JLabel();
+        jTextField10 = new javax.swing.JTextField();
+        jLabel18 = new javax.swing.JLabel();
+        jTextField11 = new javax.swing.JTextField();
+        jLabel19 = new javax.swing.JLabel();
+        jTextField12 = new javax.swing.JTextField();
+        jLabel20 = new javax.swing.JLabel();
+        jLabel21 = new javax.swing.JLabel();
+        jTextField14 = new javax.swing.JTextField();
+        jComboBox4 = new javax.swing.JComboBox<>();
+        jScrollBar1 = new javax.swing.JScrollBar();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTable2 = new javax.swing.JTable();
+        jLabel22 = new javax.swing.JLabel();
+        jTextField13 = new javax.swing.JTextField();
+        BookingManagement = new javax.swing.JPanel();
+        Nav4 = new javax.swing.JPanel();
+        jPanel20 = new javax.swing.JPanel();
+        Title4 = new javax.swing.JLabel();
+        DashBoardBtn4 = new javax.swing.JLabel();
+        ManageTeamBtn4 = new javax.swing.JLabel();
+        ManagePlayerBtn4 = new javax.swing.JLabel();
+        BookingBtn4 = new javax.swing.JLabel();
+        ScheduleBtn4 = new javax.swing.JLabel();
+        AnnouncementBtn4 = new javax.swing.JLabel();
+        Main4 = new javax.swing.JPanel();
+        jPanel12 = new javax.swing.JPanel();
+        ScheduleManagement = new javax.swing.JPanel();
+        Nav5 = new javax.swing.JPanel();
+        jPanel8 = new javax.swing.JPanel();
+        Title5 = new javax.swing.JLabel();
+        DashBoardBtn5 = new javax.swing.JLabel();
+        ManageTeamBtn5 = new javax.swing.JLabel();
+        ManagePlayerBtn5 = new javax.swing.JLabel();
+        BookingBtn5 = new javax.swing.JLabel();
+        ScheduleBtn5 = new javax.swing.JLabel();
+        AnnouncementBtn5 = new javax.swing.JLabel();
+        Main5 = new javax.swing.JPanel();
+        jPanel14 = new javax.swing.JPanel();
+        AnnouncementManagement = new javax.swing.JPanel();
+        Nav6 = new javax.swing.JPanel();
+        jPanel11 = new javax.swing.JPanel();
+        Title6 = new javax.swing.JLabel();
+        DashBoardBtn6 = new javax.swing.JLabel();
+        ManageTeamBtn6 = new javax.swing.JLabel();
+        ManagePlayerBtn6 = new javax.swing.JLabel();
+        BookingBtn6 = new javax.swing.JLabel();
+        ScheduleBtn6 = new javax.swing.JLabel();
+        AnnouncementBtn6 = new javax.swing.JLabel();
+        Main6 = new javax.swing.JPanel();
+        jPanel16 = new javax.swing.JPanel();
+        ProfileSettings = new javax.swing.JPanel();
+        Nav7 = new javax.swing.JPanel();
+        jPanel21 = new javax.swing.JPanel();
+        Title7 = new javax.swing.JLabel();
+        DashBoardBtn7 = new javax.swing.JLabel();
+        ManageTeamBtn7 = new javax.swing.JLabel();
+        ManagePlayerBtn7 = new javax.swing.JLabel();
+        BookingBtn7 = new javax.swing.JLabel();
+        ScheduleBtn7 = new javax.swing.JLabel();
+        AnnouncementBtn7 = new javax.swing.JLabel();
+        Main7 = new javax.swing.JPanel();
+        jPanel18 = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(1311, 720));
@@ -79,30 +264,56 @@ public class Admin extends javax.swing.JFrame {
 
         Login.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jLabel2.setFont(new java.awt.Font("SimSun", 0, 48)); // NOI18N
-        jLabel2.setText("Login");
+        LoginSignUp.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
+        LoginSignUp.setForeground(new java.awt.Color(51, 102, 0));
+        LoginSignUp.setText("Sign Up");
+        Login.add(LoginSignUp, new org.netbeans.lib.awtextra.AbsoluteConstraints(940, 500, -1, -1));
+        LoginSignUp.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                System.out.print("Button clicked");
+                // Get the CardLayout from jPanel1
+                CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
 
-        jTextField2.setFont(new java.awt.Font("Serif", 0, 24)); // NOI18N
-        jTextField2.setBorder(new javax.swing.border.MatteBorder(null));
-        jTextField2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField2ActionPerformed(evt);
+                // Switch to the AdminDashboard card
+                cardLayout.show(jPanel1, "card2");
+            }
+
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                LoginSignUp.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
             }
         });
 
-        jLabel3.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
-        jLabel3.setText("Password");
+        jLabel2.setFont(new java.awt.Font("SimSun", 0, 48)); // NOI18N
+        jLabel2.setText("Login");
+        Login.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(860, 80, -1, -1));
 
         jLabel4.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
         jLabel4.setText("Username");
+        Login.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 180, -1, -1));
 
-        jPasswordField1.setFont(new java.awt.Font("Serif", 0, 24)); // NOI18N
-        jPasswordField1.setBorder(new javax.swing.border.MatteBorder(null));
-        jPasswordField1.addActionListener(new java.awt.event.ActionListener() {
+        LoginUsername.setFont(new java.awt.Font("Serif", 0, 24)); // NOI18N
+        LoginUsername.setBorder(new javax.swing.border.MatteBorder(null));
+        LoginUsername.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jPasswordField1ActionPerformed(evt);
+                LoginUsernameActionPerformed(evt);
             }
         });
+        Login.add(LoginUsername, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 210, 320, 57));
+
+        jLabel3.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
+        jLabel3.setText("Password");
+        Login.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 290, -1, -1));
+
+        LoginPassword.setFont(new java.awt.Font("Serif", 0, 24)); // NOI18N
+        LoginPassword.setBorder(new javax.swing.border.MatteBorder(null));
+        LoginPassword.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                LoginPasswordActionPerformed(evt);
+            }
+        });
+        Login.add(LoginPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 320, 320, 60));
 
         LoginBtn.setBackground(new java.awt.Color(51, 51, 51));
         LoginBtn.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
@@ -113,323 +324,2054 @@ public class Admin extends javax.swing.JFrame {
                 LoginBtnActionPerformed(evt);
             }
         });
+        Login.add(LoginBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(950, 420, 112, 38));
 
         jLabel5.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
         jLabel5.setText("New User ?");
+        Login.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 500, -1, -1));
 
-        SignUp.setBackground(new java.awt.Color(239, 239, 239));
-        SignUp.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
-        SignUp.setForeground(new java.awt.Color(0, 102, 204));
-        SignUp.setText("Sign Up");
-        SignUp.setBorder(javax.swing.BorderFactory.createCompoundBorder());
-        SignUp.addActionListener(new java.awt.event.ActionListener() {
+        LoginBg.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/Scoccer.jpeg"))); // NOI18N
+        Login.add(LoginBg, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
+
+        jPanel1.add(Login, "card1");
+
+        SignUp.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        jLabel23.setFont(new java.awt.Font("SimSun", 0, 48)); // NOI18N
+        jLabel23.setText("Sign Up");
+        SignUp.add(jLabel23, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 40, -1, -1));
+
+        jLabel24.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
+        jLabel24.setText("Username");
+        SignUp.add(jLabel24, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 320, -1, -1));
+
+        jLabel26.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
+        jLabel26.setText("First Name");
+        SignUp.add(jLabel26, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 100, -1, -1));
+
+        jLabel27.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
+        jLabel27.setText("Last Name");
+        SignUp.add(jLabel27, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 170, -1, -1));
+
+        jLabel25.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
+        jLabel25.setText("Retype Password");
+        SignUp.add(jLabel25, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 460, -1, -1));
+
+        jLabel28.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
+        jLabel28.setText("Date of Birth");
+        SignUp.add(jLabel28, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 250, -1, -1));
+
+        jLabel29.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
+        jLabel29.setText("Password");
+        SignUp.add(jLabel29, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 390, -1, -1));
+
+        SignUpRetypePw.setFont(new java.awt.Font("Serif", 0, 24)); // NOI18N
+        SignUpRetypePw.setBorder(new javax.swing.border.MatteBorder(null));
+        SignUpRetypePw.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                SignUpActionPerformed(evt);
+                SignUpRetypePwActionPerformed(evt);
             }
         });
+        SignUp.add(SignUpRetypePw, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 490, 320, 40));
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(193, Short.MAX_VALUE)
-                .addComponent(LoginBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(185, 185, 185))
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(40, 40, 40)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel5)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(SignUp))
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jTextField2, javax.swing.GroupLayout.DEFAULT_SIZE, 320, Short.MAX_VALUE)
-                        .addComponent(jLabel4)
-                        .addComponent(jLabel3)
-                        .addComponent(jLabel2)
-                        .addComponent(jPasswordField1)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(30, 30, 30)
-                .addComponent(jLabel2)
-                .addGap(41, 41, 41)
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(15, 15, 15)
-                .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPasswordField1, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(LoginBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 66, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel5)
-                    .addComponent(SignUp))
-                .addGap(59, 59, 59))
-        );
-
-        Login.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 90, 490, 530));
-
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/football.jpg"))); // NOI18N
-        Login.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
-
-        jPanel1.add(Login, "card2");
-
-        AdminDashboard.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-
-        DashNav.setBackground(new java.awt.Color(0, 102, 102));
-        DashNav.setMinimumSize(new java.awt.Dimension(220, 720));
-        DashNav.setLayout(new java.awt.CardLayout());
-
-        jPanel5.setBackground(new java.awt.Color(0, 102, 102));
-        jPanel5.setMinimumSize(new java.awt.Dimension(220, 720));
-
-        jLabel7.setFont(new java.awt.Font("Serif", 0, 48)); // NOI18N
-        jLabel7.setForeground(new java.awt.Color(0, 51, 51));
-        jLabel7.setText("volta.");
-
-        DashBoardBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ClickedDashboard.png"))); // NOI18N
-
-        ManageTeamBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManageTeam-preview.png"))); // NOI18N
-
-        ManagePlayer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManagePlayer.png"))); // NOI18N
-
-        BookingBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedBooking.png"))); // NOI18N
-
-        ScheduleBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedSchedule.png"))); // NOI18N
-
-        AnnouncementBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedAnnouncement.png"))); // NOI18N
-
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addComponent(ManagePlayer, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(DashBoardBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ManageTeamBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(BookingBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ScheduleBtn)
-                            .addComponent(AnnouncementBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(30, 30, 30)
-                .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(126, 126, 126)
-                .addComponent(DashBoardBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(ManageTeamBtn)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(ManagePlayer)
-                .addGap(18, 18, 18)
-                .addComponent(BookingBtn)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(ScheduleBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(AnnouncementBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(103, Short.MAX_VALUE))
-        );
-
-        ManageTeamBtn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                System.out.print("Button clicked");
-                // Get the CardLayout from jPanel1
-                CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
-
-                // Switch to the AdminDashboard card
-                cardLayout.show(jPanel1, "card4");
-            }
-
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                ManageTeamBtn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        SignUpFirstName.setFont(new java.awt.Font("Serif", 0, 24)); // NOI18N
+        SignUpFirstName.setBorder(new javax.swing.border.MatteBorder(null));
+        SignUpFirstName.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SignUpFirstNameActionPerformed(evt);
             }
         });
+        SignUp.add(SignUpFirstName, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 130, 320, 40));
 
-        DashNav.add(jPanel5, "card2");
+        SignUpLastName.setFont(new java.awt.Font("Serif", 0, 24)); // NOI18N
+        SignUpLastName.setBorder(new javax.swing.border.MatteBorder(null));
+        SignUpLastName.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SignUpLastNameActionPerformed(evt);
+            }
+        });
+        SignUp.add(SignUpLastName, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 200, 320, 40));
 
-        AdminDashboard.add(DashNav, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 220, 720));
+        SignUpUsername.setFont(new java.awt.Font("Serif", 0, 24)); // NOI18N
+        SignUpUsername.setBorder(new javax.swing.border.MatteBorder(null));
+        SignUpUsername.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SignUpUsernameActionPerformed(evt);
+            }
+        });
+        SignUp.add(SignUpUsername, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 350, 320, 40));
 
-        MainDash.setLayout(new java.awt.CardLayout());
+        SignUpPassword.setFont(new java.awt.Font("Serif", 0, 24)); // NOI18N
+        SignUpPassword.setBorder(new javax.swing.border.MatteBorder(null));
+        SignUpPassword.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SignUpPasswordActionPerformed(evt);
+            }
+        });
+        SignUp.add(SignUpPassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 420, 320, 40));
 
-        jLabel6.setFont(new java.awt.Font("Serif", 0, 36)); // NOI18N
-        jLabel6.setText("Welcome Back Shaira!");
+        SignUpBtn.setBackground(new java.awt.Color(51, 51, 51));
+        SignUpBtn.setFont(new java.awt.Font("Serif", 0, 18)); // NOI18N
+        SignUpBtn.setForeground(new java.awt.Color(204, 204, 204));
+        SignUpBtn.setText("Sign Up");
+        SignUpBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SignUpBtnActionPerformed(evt);
+            }
+        });
+        SignUp.add(SignUpBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(950, 540, 112, 38));
 
-        jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ProfileIcon.png"))); // NOI18N
-        jLabel8.setText(".");
+        DateOfBirth.setCurrentView(new datechooser.view.appearance.AppearancesList("Light",
+            new datechooser.view.appearance.ViewAppearance("custom",
+                new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                    new java.awt.Color(0, 0, 0),
+                    new java.awt.Color(0, 0, 255),
+                    false,
+                    true,
+                    new datechooser.view.appearance.swing.ButtonPainter()),
+                new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                    new java.awt.Color(0, 0, 0),
+                    new java.awt.Color(0, 0, 255),
+                    true,
+                    true,
+                    new datechooser.view.appearance.swing.ButtonPainter()),
+                new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                    new java.awt.Color(0, 0, 255),
+                    new java.awt.Color(0, 0, 255),
+                    false,
+                    true,
+                    new datechooser.view.appearance.swing.ButtonPainter()),
+                new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                    new java.awt.Color(128, 128, 128),
+                    new java.awt.Color(0, 0, 255),
+                    false,
+                    true,
+                    new datechooser.view.appearance.swing.LabelPainter()),
+                new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                    new java.awt.Color(0, 0, 0),
+                    new java.awt.Color(0, 0, 255),
+                    false,
+                    true,
+                    new datechooser.view.appearance.swing.LabelPainter()),
+                new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                    new java.awt.Color(0, 0, 0),
+                    new java.awt.Color(255, 0, 0),
+                    false,
+                    false,
+                    new datechooser.view.appearance.swing.ButtonPainter()),
+                (datechooser.view.BackRenderer)null,
+                false,
+                true)));
+    DateOfBirth.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 1));
+    DateOfBirth.setShowOneMonth(true);
+    SignUp.add(DateOfBirth, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 280, 320, 40));
 
-        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
-        jPanel6.setLayout(jPanel6Layout);
-        jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel6Layout.createSequentialGroup()
-                .addGap(33, 33, 33)
-                .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 574, Short.MAX_VALUE)
-                .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(74, 74, 74))
-        );
-        jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel6Layout.createSequentialGroup()
-                .addGap(56, 56, 56)
-                .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8))
-                .addContainerGap(581, Short.MAX_VALUE))
-        );
+    LoginBg1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/Scoccer.jpeg"))); // NOI18N
+    SignUp.add(LoginBg1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
 
-        MainDash.add(jPanel6, "card2");
+    jPanel1.add(SignUp, "card2");
 
-        AdminDashboard.add(MainDash, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 0, 1110, 720));
+    AdminDashboard.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPanel1.add(AdminDashboard, "card3");
-        AdminDashboard.getAccessibleContext().setAccessibleParent(AdminDashboard);
+    Nav1.setBackground(new java.awt.Color(0, 102, 102));
+    Nav1.setMinimumSize(new java.awt.Dimension(225, 720));
+    Nav1.setLayout(new java.awt.CardLayout());
 
-        TeamManagement.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+    jPanel5.setBackground(new java.awt.Color(0, 102, 102));
+    jPanel5.setMinimumSize(new java.awt.Dimension(220, 720));
 
-        DashNav2.setBackground(new java.awt.Color(0, 102, 102));
-        DashNav2.setLayout(new java.awt.CardLayout());
+    Title1.setFont(new java.awt.Font("Serif", 0, 48)); // NOI18N
+    Title1.setForeground(new java.awt.Color(0, 51, 51));
+    Title1.setText("volta.");
 
-        jPanel7.setBackground(new java.awt.Color(0, 102, 102));
-        jPanel7.setMinimumSize(new java.awt.Dimension(220, 720));
+    DashBoardBtn1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    DashBoardBtn1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ClickedDashboard.png"))); // NOI18N
 
-        DashBoardBtn1.setFont(new java.awt.Font("Serif", 0, 48)); // NOI18N
-        DashBoardBtn1.setForeground(new java.awt.Color(0, 51, 51));
-        DashBoardBtn1.setText("volta.");
+    ManageTeamBtn1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManageTeamBtn1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManageTeam.png"))); // NOI18N
 
-        ManagePlayer1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManagePlayer.png"))); // NOI18N
+    ManagePlayerBtn1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManagePlayerBtn1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManagePlayer.png"))); // NOI18N
 
-        BookingBtn1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedBooking.png"))); // NOI18N
+    BookingBtn1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    BookingBtn1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedBooking.png"))); // NOI18N
 
-        ScheduleBtn1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedSchedule.png"))); // NOI18N
+    ScheduleBtn1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ScheduleBtn1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedSchedule.png"))); // NOI18N
 
-        AnnouncementBtn1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedAnnouncement.png"))); // NOI18N
+    AnnouncementBtn1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    AnnouncementBtn1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedAnnouncement.png"))); // NOI18N
 
-        jLabel10.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedDashboard.png"))); // NOI18N
+    javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+    jPanel5.setLayout(jPanel5Layout);
+    jPanel5Layout.setHorizontalGroup(
+        jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel5Layout.createSequentialGroup()
+            .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel5Layout.createSequentialGroup()
+                    .addGap(118, 118, 118)
+                    .addComponent(Title1, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel5Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(DashBoardBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel5Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(ManageTeamBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel5Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ManagePlayerBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel5Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(BookingBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel5Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ScheduleBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel5Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(AnnouncementBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap(14, Short.MAX_VALUE))
+    );
+    jPanel5Layout.setVerticalGroup(
+        jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel5Layout.createSequentialGroup()
+            .addGap(33, 33, 33)
+            .addComponent(Title1, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(89, 89, 89)
+            .addComponent(DashBoardBtn1)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(ManageTeamBtn1)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(ManagePlayerBtn1)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(BookingBtn1)
+            .addGap(12, 12, 12)
+            .addComponent(ScheduleBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(AnnouncementBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap())
+    );
 
-        jLabel9.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ClickedManageTeam.png"))); // NOI18N
+    // Code adding the component to the parent container - not shown here
 
-        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
-        jPanel7.setLayout(jPanel7Layout);
-        jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel7Layout.createSequentialGroup()
-                .addComponent(ManagePlayer1, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(jPanel7Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(DashBoardBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel7Layout.createSequentialGroup()
-                        .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(BookingBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ScheduleBtn1)
-                            .addComponent(AnnouncementBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 198, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel7Layout.createSequentialGroup()
-                .addGap(30, 30, 30)
-                .addComponent(DashBoardBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(123, 123, 123)
-                .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(26, 26, 26)
-                .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(ManagePlayer1)
-                .addGap(18, 18, 18)
-                .addComponent(BookingBtn1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(ScheduleBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(AnnouncementBtn1, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(103, Short.MAX_VALUE))
-        );
+    DashBoardBtn1.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
 
-        DashNav2.add(jPanel7, "card2");
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card3");
+        }
 
-        TeamManagement.add(DashNav2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 220, 720));
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            DashBoardBtn1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManageTeamBtn1.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
 
-        MainDash2.setLayout(new java.awt.CardLayout());
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card4");
+        }
 
-        jLabel11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ProfileIcon.png"))); // NOI18N
-        jLabel11.setText(".");
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManageTeamBtn1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManagePlayerBtn1.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
 
-        javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
-        jPanel10.setLayout(jPanel10Layout);
-        jPanel10Layout.setHorizontalGroup(
-            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel10Layout.createSequentialGroup()
-                .addContainerGap(939, Short.MAX_VALUE)
-                .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(74, 74, 74))
-        );
-        jPanel10Layout.setVerticalGroup(
-            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel10Layout.createSequentialGroup()
-                .addGap(56, 56, 56)
-                .addComponent(jLabel11)
-                .addContainerGap(581, Short.MAX_VALUE))
-        );
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card5");
+        }
 
-        MainDash2.add(jPanel10, "card2");
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManagePlayerBtn1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    BookingBtn1.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
 
-        TeamManagement.add(MainDash2, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 0, 1110, 720));
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card6");
+        }
 
-        jPanel1.add(TeamManagement, "card4");
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            BookingBtn1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ScheduleBtn1.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
 
-        getContentPane().add(jPanel1);
-        jPanel1.setBounds(0, 0, 1310, 720);
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card7");
+        }
 
-        pack();
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ScheduleBtn1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    AnnouncementBtn1.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card8");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            AnnouncementBtn1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+
+    Nav1.add(jPanel5, "card2");
+
+    AdminDashboard.add(Nav1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 240, 720));
+
+    Main1.setLayout(new java.awt.CardLayout());
+
+    jPanel6.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    jLabel6.setBackground(new java.awt.Color(0, 153, 204));
+    jLabel6.setFont(new java.awt.Font("Serif", 0, 36)); // NOI18N
+    jLabel6.setForeground(new java.awt.Color(0, 153, 153));
+    jLabel6.setText("Welcome Back Shaira!");
+    jPanel6.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 120, -1, 56));
+
+    ProfileBtn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ProfileBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ProfileIcon.png"))); // NOI18N
+    ProfileBtn.setText(".");
+    jPanel6.add(ProfileBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(980, 100, 80, 70));
+    ProfileBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card9");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ProfileBtn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+
+    jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/DashBoardBg.jpg"))); // NOI18N
+    jPanel6.add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(-10, 0, 1080, 180));
+
+    Main1.add(jPanel6, "card2");
+
+    AdminDashboard.add(Main1, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 0, 1070, 720));
+
+    jPanel1.add(AdminDashboard, "card3");
+    AdminDashboard.getAccessibleContext().setAccessibleParent(AdminDashboard);
+
+    TeamManagement.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    Nav2.setBackground(new java.awt.Color(0, 102, 102));
+    Nav2.setMinimumSize(new java.awt.Dimension(225, 720));
+    Nav2.setLayout(new java.awt.CardLayout());
+
+    jPanel19.setBackground(new java.awt.Color(0, 102, 102));
+    jPanel19.setMinimumSize(new java.awt.Dimension(220, 720));
+
+    Title2.setFont(new java.awt.Font("Serif", 0, 48)); // NOI18N
+    Title2.setForeground(new java.awt.Color(0, 51, 51));
+    Title2.setText("volta.");
+
+    DashBoardBtn2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    DashBoardBtn2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedDashboard.png"))); // NOI18N
+
+    ManageTeamBtn2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManageTeamBtn2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ClickedManageTeam.png"))); // NOI18N
+
+    ManagePlayerBtn2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManagePlayerBtn2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManagePlayer.png"))); // NOI18N
+
+    BookingBtn2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    BookingBtn2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedBooking.png"))); // NOI18N
+
+    ScheduleBtn2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ScheduleBtn2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedSchedule.png"))); // NOI18N
+
+    AnnouncementBtn2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    AnnouncementBtn2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedAnnouncement.png"))); // NOI18N
+
+    javax.swing.GroupLayout jPanel19Layout = new javax.swing.GroupLayout(jPanel19);
+    jPanel19.setLayout(jPanel19Layout);
+    jPanel19Layout.setHorizontalGroup(
+        jPanel19Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel19Layout.createSequentialGroup()
+            .addGroup(jPanel19Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel19Layout.createSequentialGroup()
+                    .addGap(118, 118, 118)
+                    .addComponent(Title2, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel19Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(DashBoardBtn2, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel19Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(ManageTeamBtn2, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel19Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ManagePlayerBtn2, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel19Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(BookingBtn2, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel19Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ScheduleBtn2, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel19Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(AnnouncementBtn2, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap(14, Short.MAX_VALUE))
+    );
+    jPanel19Layout.setVerticalGroup(
+        jPanel19Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel19Layout.createSequentialGroup()
+            .addGap(33, 33, 33)
+            .addComponent(Title2, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(89, 89, 89)
+            .addComponent(DashBoardBtn2)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(ManageTeamBtn2)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(ManagePlayerBtn2)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(BookingBtn2)
+            .addGap(12, 12, 12)
+            .addComponent(ScheduleBtn2, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(AnnouncementBtn2, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap())
+    );
+
+    // Code adding the component to the parent container - not shown here
+
+    DashBoardBtn2.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card3");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            DashBoardBtn2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManageTeamBtn2.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card4");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManageTeamBtn2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManagePlayerBtn2.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card5");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManagePlayerBtn2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    BookingBtn2.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card6");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            BookingBtn2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ScheduleBtn2.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card7");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ScheduleBtn2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    AnnouncementBtn2.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card8");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            AnnouncementBtn2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+
+    Nav2.add(jPanel19, "card2");
+
+    TeamManagement.add(Nav2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 240, 720));
+
+    Main2.setLayout(new java.awt.CardLayout());
+
+    jLabel1.setFont(new java.awt.Font("Serif", 0, 50)); // NOI18N
+    jLabel1.setText("Team Management");
+    jLabel1.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+
+    jLabel7.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel7.setText("Team Name");
+
+    jLabel8.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel8.setText("Team ID");
+
+    jLabel9.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel9.setText("No. Player");
+
+    jLabel10.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel10.setText("Manager");
+
+    jTextField1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    jTextField1.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jTextField1ActionPerformed(evt);
+        }
+    });
+
+    jTextField3.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    jTextField4.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    jTextField5.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    jButton3.setText("jButton1");
+
+    jLabel11.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel11.setText("Search");
+
+    jTextField6.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    jLabel12.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel12.setText("Sort By");
+
+    jTextField7.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        new Object [][] {
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null},
+            {null, null, null, null}
+        },
+        new String [] {
+            "Team ID", "Team Name", "Manager", "No. Player"
+        }
+    ));
+    jScrollPane1.setViewportView(jTable1);
+
+    jButton5.setText("jButton1");
+
+    jButton6.setText("jButton1");
+
+    jButton7.setText("jButton1");
+
+    javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
+    jPanel10.setLayout(jPanel10Layout);
+    jPanel10Layout.setHorizontalGroup(
+        jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel10Layout.createSequentialGroup()
+            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel10Layout.createSequentialGroup()
+                    .addGap(103, 103, 103)
+                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(jPanel10Layout.createSequentialGroup()
+                            .addComponent(jLabel9)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
+                            .addComponent(jLabel10)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel10Layout.createSequentialGroup()
+                            .addComponent(jLabel8)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 417, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
+                            .addComponent(jLabel7)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 63, Short.MAX_VALUE)
+                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addGroup(jPanel10Layout.createSequentialGroup()
+                    .addGap(141, 141, 141)
+                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(jButton6, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGap(90, 90, 90)
+                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))))
+            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel10Layout.createSequentialGroup()
+                    .addGap(112, 112, 112)
+                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel10Layout.createSequentialGroup()
+                            .addComponent(jLabel11)
+                            .addGap(28, 28, 28)
+                            .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel10Layout.createSequentialGroup()
+                            .addComponent(jLabel12)
+                            .addGap(18, 18, 18)
+                            .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(31, 31, 31))))
+    );
+    jPanel10Layout.setVerticalGroup(
+        jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel10Layout.createSequentialGroup()
+            .addGap(63, 63, 63)
+            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(62, 62, 62)
+            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(jLabel8)
+                .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGap(35, 35, 35)
+            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(jLabel7)
+                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGap(30, 30, 30)
+            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel10Layout.createSequentialGroup()
+                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel10)
+                        .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGap(32, 32, 32)
+                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel9)
+                        .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGap(56, 56, 56)
+                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGap(18, 18, 18)
+            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jButton6, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addContainerGap(97, Short.MAX_VALUE))
+    );
+
+    Main2.add(jPanel10, "card2");
+
+    TeamManagement.add(Main2, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 0, 1070, 720));
+
+    jPanel1.add(TeamManagement, "card4");
+
+    PlayerManagement.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    Nav3.setBackground(new java.awt.Color(0, 102, 102));
+    Nav3.setMinimumSize(new java.awt.Dimension(225, 720));
+    Nav3.setLayout(new java.awt.CardLayout());
+
+    jPanel7.setBackground(new java.awt.Color(0, 102, 102));
+    jPanel7.setMinimumSize(new java.awt.Dimension(220, 720));
+
+    Title3.setFont(new java.awt.Font("Serif", 0, 48)); // NOI18N
+    Title3.setForeground(new java.awt.Color(0, 51, 51));
+    Title3.setText("volta.");
+
+    DashBoardBtn3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    DashBoardBtn3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedDashboard.png"))); // NOI18N
+
+    ManageTeamBtn3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManageTeamBtn3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManageTeam.png"))); // NOI18N
+
+    ManagePlayerBtn3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManagePlayerBtn3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ClickedManagePlayer.png"))); // NOI18N
+
+    BookingBtn3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    BookingBtn3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedBooking.png"))); // NOI18N
+
+    ScheduleBtn3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ScheduleBtn3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedSchedule.png"))); // NOI18N
+
+    AnnouncementBtn3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    AnnouncementBtn3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedAnnouncement.png"))); // NOI18N
+
+    javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
+    jPanel7.setLayout(jPanel7Layout);
+    jPanel7Layout.setHorizontalGroup(
+        jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel7Layout.createSequentialGroup()
+            .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel7Layout.createSequentialGroup()
+                    .addGap(118, 118, 118)
+                    .addComponent(Title3, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel7Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(DashBoardBtn3, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel7Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(ManageTeamBtn3, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel7Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ManagePlayerBtn3, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel7Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(BookingBtn3, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel7Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ScheduleBtn3, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel7Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(AnnouncementBtn3, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap(14, Short.MAX_VALUE))
+    );
+    jPanel7Layout.setVerticalGroup(
+        jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel7Layout.createSequentialGroup()
+            .addGap(33, 33, 33)
+            .addComponent(Title3, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(89, 89, 89)
+            .addComponent(DashBoardBtn3)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(ManageTeamBtn3)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(ManagePlayerBtn3)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(BookingBtn3)
+            .addGap(12, 12, 12)
+            .addComponent(ScheduleBtn3, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(AnnouncementBtn3, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap())
+    );
+
+    // Code adding the component to the parent container - not shown here
+
+    DashBoardBtn3.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card3");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            DashBoardBtn3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManageTeamBtn3.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card4");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManageTeamBtn3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManagePlayerBtn3.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card5");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManagePlayerBtn3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    BookingBtn3.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card6");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            BookingBtn3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ScheduleBtn3.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card7");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ScheduleBtn3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    AnnouncementBtn3.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card8");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            AnnouncementBtn3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+
+    Nav3.add(jPanel7, "card2");
+
+    PlayerManagement.add(Nav3, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 240, 720));
+
+    Main3.setLayout(new java.awt.CardLayout());
+
+    jLabel13.setFont(new java.awt.Font("Serif", 0, 50)); // NOI18N
+    jLabel13.setText("Player Management");
+    jLabel13.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+
+    jLabel14.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel14.setText("Player ID");
+
+    jTextField8.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    jLabel15.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel15.setText("Team");
+
+    jTextField9.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    jLabel16.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel16.setText("Age");
+
+    jTextField10.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    jLabel18.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel18.setText("Jersey No");
+
+    jTextField11.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    jLabel19.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel19.setText("Position");
+
+    jTextField12.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    jLabel20.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel20.setText("Search");
+
+    jLabel21.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel21.setText("Sort By");
+
+    jTextField14.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    jComboBox4.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+    jComboBox4.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jComboBox4ActionPerformed(evt);
+        }
+    });
+
+    jTable2.setModel(new javax.swing.table.DefaultTableModel(
+        new Object [][] {
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null},
+            {null, null, null, null, null, null}
+        },
+        new String [] {
+            "Player ID", "Player Name", "Age", "Jersey", "Position", "Team"
+        }
+    ) {
+        Class[] types = new Class [] {
+            java.lang.Integer.class, java.lang.String.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.String.class, java.lang.String.class
+        };
+
+        public Class getColumnClass(int columnIndex) {
+            return types [columnIndex];
+        }
+    });
+    jScrollPane2.setViewportView(jTable2);
+
+    jLabel22.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel22.setText("Player Name");
+
+    jTextField13.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
+    jPanel9.setLayout(jPanel9Layout);
+    jPanel9Layout.setHorizontalGroup(
+        jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel9Layout.createSequentialGroup()
+            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(jPanel9Layout.createSequentialGroup()
+                    .addGap(118, 118, 118)
+                    .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 417, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel9Layout.createSequentialGroup()
+                    .addGap(104, 104, 104)
+                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel9Layout.createSequentialGroup()
+                            .addComponent(jLabel14)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jTextField9, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel9Layout.createSequentialGroup()
+                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel15)
+                                .addComponent(jLabel16)
+                                .addComponent(jLabel18)
+                                .addComponent(jLabel19)
+                                .addComponent(jLabel22))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jTextField8, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jTextField10, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jTextField11, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jTextField12, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jTextField13, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))))))
+            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel9Layout.createSequentialGroup()
+                    .addGap(91, 91, 91)
+                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jLabel21)
+                        .addComponent(jLabel20))
+                    .addGap(18, 18, 18)
+                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jTextField14, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jComboBox4, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel9Layout.createSequentialGroup()
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
+            .addComponent(jScrollBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+    );
+    jPanel9Layout.setVerticalGroup(
+        jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel9Layout.createSequentialGroup()
+            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel9Layout.createSequentialGroup()
+                    .addGap(68, 68, 68)
+                    .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(60, 60, 60)
+                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel14)
+                        .addComponent(jTextField9, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel20)
+                        .addComponent(jTextField14, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGap(18, 18, 18)
+                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jComboBox4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 31, Short.MAX_VALUE)
+                        .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jTextField8, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel21))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel9Layout.createSequentialGroup()
+                            .addGap(0, 0, Short.MAX_VALUE)
+                            .addComponent(jLabel22)))
+                    .addGap(18, 18, 18)
+                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel9Layout.createSequentialGroup()
+                            .addGap(7, 7, 7)
+                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jLabel15)
+                                .addComponent(jTextField13, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGap(18, 18, 18)
+                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jLabel16)
+                                .addComponent(jTextField10, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGap(18, 18, 18)
+                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jLabel18)
+                                .addComponent(jTextField11, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGap(18, 18, 18)
+                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jLabel19)
+                                .addComponent(jTextField12, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGap(165, 165, 165))
+                .addComponent(jScrollBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addContainerGap())
+    );
+
+    Main3.add(jPanel9, "card2");
+
+    PlayerManagement.add(Main3, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 0, 1070, 720));
+
+    jPanel1.add(PlayerManagement, "card5");
+
+    BookingManagement.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    Nav4.setBackground(new java.awt.Color(0, 102, 102));
+    Nav4.setMinimumSize(new java.awt.Dimension(225, 720));
+    Nav4.setLayout(new java.awt.CardLayout());
+
+    jPanel20.setBackground(new java.awt.Color(0, 102, 102));
+    jPanel20.setMinimumSize(new java.awt.Dimension(220, 720));
+
+    Title4.setFont(new java.awt.Font("Serif", 0, 48)); // NOI18N
+    Title4.setForeground(new java.awt.Color(0, 51, 51));
+    Title4.setText("volta.");
+
+    DashBoardBtn4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    DashBoardBtn4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedDashboard.png"))); // NOI18N
+
+    ManageTeamBtn4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManageTeamBtn4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManageTeam.png"))); // NOI18N
+
+    ManagePlayerBtn4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManagePlayerBtn4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManagePlayer.png"))); // NOI18N
+
+    BookingBtn4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    BookingBtn4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ClickedBooking.png"))); // NOI18N
+
+    ScheduleBtn4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ScheduleBtn4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedSchedule.png"))); // NOI18N
+
+    AnnouncementBtn4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    AnnouncementBtn4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedAnnouncement.png"))); // NOI18N
+
+    javax.swing.GroupLayout jPanel20Layout = new javax.swing.GroupLayout(jPanel20);
+    jPanel20.setLayout(jPanel20Layout);
+    jPanel20Layout.setHorizontalGroup(
+        jPanel20Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel20Layout.createSequentialGroup()
+            .addGroup(jPanel20Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel20Layout.createSequentialGroup()
+                    .addGap(118, 118, 118)
+                    .addComponent(Title4, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel20Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(DashBoardBtn4, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel20Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(ManageTeamBtn4, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel20Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ManagePlayerBtn4, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel20Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(BookingBtn4, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel20Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ScheduleBtn4, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel20Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(AnnouncementBtn4, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap(14, Short.MAX_VALUE))
+    );
+    jPanel20Layout.setVerticalGroup(
+        jPanel20Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel20Layout.createSequentialGroup()
+            .addGap(33, 33, 33)
+            .addComponent(Title4, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(89, 89, 89)
+            .addComponent(DashBoardBtn4)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(ManageTeamBtn4)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(ManagePlayerBtn4)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(BookingBtn4)
+            .addGap(12, 12, 12)
+            .addComponent(ScheduleBtn4, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(AnnouncementBtn4, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap())
+    );
+
+    // Code adding the component to the parent container - not shown here
+
+    DashBoardBtn4.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card3");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            DashBoardBtn4.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManageTeamBtn4.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card4");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManageTeamBtn4.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManagePlayerBtn4.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card5");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManagePlayerBtn4.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    BookingBtn4.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card6");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            BookingBtn4.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ScheduleBtn4.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card7");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ScheduleBtn4.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    AnnouncementBtn4.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card8");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            AnnouncementBtn4.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+
+    Nav4.add(jPanel20, "card2");
+
+    BookingManagement.add(Nav4, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 240, 720));
+
+    Main4.setLayout(new java.awt.CardLayout());
+
+    javax.swing.GroupLayout jPanel12Layout = new javax.swing.GroupLayout(jPanel12);
+    jPanel12.setLayout(jPanel12Layout);
+    jPanel12Layout.setHorizontalGroup(
+        jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGap(0, 1110, Short.MAX_VALUE)
+    );
+    jPanel12Layout.setVerticalGroup(
+        jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGap(0, 720, Short.MAX_VALUE)
+    );
+
+    Main4.add(jPanel12, "card2");
+
+    BookingManagement.add(Main4, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 0, 1110, 720));
+
+    jPanel1.add(BookingManagement, "card6");
+
+    ScheduleManagement.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    Nav5.setBackground(new java.awt.Color(0, 102, 102));
+    Nav5.setMinimumSize(new java.awt.Dimension(225, 720));
+    Nav5.setLayout(new java.awt.CardLayout());
+
+    jPanel8.setBackground(new java.awt.Color(0, 102, 102));
+    jPanel8.setMinimumSize(new java.awt.Dimension(220, 720));
+
+    Title5.setFont(new java.awt.Font("Serif", 0, 48)); // NOI18N
+    Title5.setForeground(new java.awt.Color(0, 51, 51));
+    Title5.setText("volta.");
+
+    DashBoardBtn5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    DashBoardBtn5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedDashboard.png"))); // NOI18N
+
+    ManageTeamBtn5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManageTeamBtn5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManageTeam.png"))); // NOI18N
+
+    ManagePlayerBtn5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManagePlayerBtn5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManagePlayer.png"))); // NOI18N
+
+    BookingBtn5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    BookingBtn5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedBooking.png"))); // NOI18N
+
+    ScheduleBtn5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ScheduleBtn5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ClickedSchedule.png"))); // NOI18N
+
+    AnnouncementBtn5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    AnnouncementBtn5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedAnnouncement.png"))); // NOI18N
+
+    javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
+    jPanel8.setLayout(jPanel8Layout);
+    jPanel8Layout.setHorizontalGroup(
+        jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel8Layout.createSequentialGroup()
+            .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel8Layout.createSequentialGroup()
+                    .addGap(118, 118, 118)
+                    .addComponent(Title5, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel8Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(DashBoardBtn5, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel8Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(ManageTeamBtn5, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel8Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ManagePlayerBtn5, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel8Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(BookingBtn5, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel8Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ScheduleBtn5, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel8Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(AnnouncementBtn5, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap(14, Short.MAX_VALUE))
+    );
+    jPanel8Layout.setVerticalGroup(
+        jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel8Layout.createSequentialGroup()
+            .addGap(33, 33, 33)
+            .addComponent(Title5, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(89, 89, 89)
+            .addComponent(DashBoardBtn5)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(ManageTeamBtn5)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(ManagePlayerBtn5)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(BookingBtn5)
+            .addGap(12, 12, 12)
+            .addComponent(ScheduleBtn5, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(AnnouncementBtn5, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap())
+    );
+
+    // Code adding the component to the parent container - not shown here
+
+    DashBoardBtn5.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card3");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            DashBoardBtn5.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManageTeamBtn5.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card4");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManageTeamBtn5.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManagePlayerBtn5.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card5");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManagePlayerBtn5.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    BookingBtn5.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card6");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            BookingBtn5.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ScheduleBtn5.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card7");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ScheduleBtn5.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    AnnouncementBtn5.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card8");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            AnnouncementBtn5.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+
+    Nav5.add(jPanel8, "card2");
+
+    ScheduleManagement.add(Nav5, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 240, 720));
+
+    Main5.setLayout(new java.awt.CardLayout());
+
+    javax.swing.GroupLayout jPanel14Layout = new javax.swing.GroupLayout(jPanel14);
+    jPanel14.setLayout(jPanel14Layout);
+    jPanel14Layout.setHorizontalGroup(
+        jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGap(0, 1070, Short.MAX_VALUE)
+    );
+    jPanel14Layout.setVerticalGroup(
+        jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGap(0, 720, Short.MAX_VALUE)
+    );
+
+    Main5.add(jPanel14, "card2");
+
+    ScheduleManagement.add(Main5, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 0, 1070, 720));
+
+    jPanel1.add(ScheduleManagement, "card7");
+
+    AnnouncementManagement.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    Nav6.setBackground(new java.awt.Color(0, 102, 102));
+    Nav6.setMinimumSize(new java.awt.Dimension(225, 720));
+    Nav6.setLayout(new java.awt.CardLayout());
+
+    jPanel11.setBackground(new java.awt.Color(0, 102, 102));
+    jPanel11.setMinimumSize(new java.awt.Dimension(220, 720));
+
+    Title6.setFont(new java.awt.Font("Serif", 0, 48)); // NOI18N
+    Title6.setForeground(new java.awt.Color(0, 51, 51));
+    Title6.setText("volta.");
+
+    DashBoardBtn6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    DashBoardBtn6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedDashboard.png"))); // NOI18N
+
+    ManageTeamBtn6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManageTeamBtn6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManageTeam.png"))); // NOI18N
+
+    ManagePlayerBtn6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManagePlayerBtn6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManagePlayer.png"))); // NOI18N
+
+    BookingBtn6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    BookingBtn6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedBooking.png"))); // NOI18N
+
+    ScheduleBtn6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ScheduleBtn6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedSchedule.png"))); // NOI18N
+
+    AnnouncementBtn6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    AnnouncementBtn6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ClickedAnnouncement.png"))); // NOI18N
+
+    javax.swing.GroupLayout jPanel11Layout = new javax.swing.GroupLayout(jPanel11);
+    jPanel11.setLayout(jPanel11Layout);
+    jPanel11Layout.setHorizontalGroup(
+        jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel11Layout.createSequentialGroup()
+            .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel11Layout.createSequentialGroup()
+                    .addGap(118, 118, 118)
+                    .addComponent(Title6, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel11Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(DashBoardBtn6, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel11Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(ManageTeamBtn6, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel11Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ManagePlayerBtn6, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel11Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(BookingBtn6, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel11Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ScheduleBtn6, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel11Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(AnnouncementBtn6, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap(14, Short.MAX_VALUE))
+    );
+    jPanel11Layout.setVerticalGroup(
+        jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel11Layout.createSequentialGroup()
+            .addGap(33, 33, 33)
+            .addComponent(Title6, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(89, 89, 89)
+            .addComponent(DashBoardBtn6)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(ManageTeamBtn6)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(ManagePlayerBtn6)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(BookingBtn6)
+            .addGap(12, 12, 12)
+            .addComponent(ScheduleBtn6, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(AnnouncementBtn6, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap())
+    );
+
+    // Code adding the component to the parent container - not shown here
+
+    DashBoardBtn6.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card3");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            DashBoardBtn6.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManageTeamBtn6.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card4");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManageTeamBtn6.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManagePlayerBtn6.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card5");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManagePlayerBtn6.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    BookingBtn6.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card6");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            BookingBtn6.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ScheduleBtn6.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card7");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ScheduleBtn6.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    AnnouncementBtn6.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card8");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            AnnouncementBtn6.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+
+    Nav6.add(jPanel11, "card2");
+
+    AnnouncementManagement.add(Nav6, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 240, 720));
+
+    Main6.setLayout(new java.awt.CardLayout());
+
+    javax.swing.GroupLayout jPanel16Layout = new javax.swing.GroupLayout(jPanel16);
+    jPanel16.setLayout(jPanel16Layout);
+    jPanel16Layout.setHorizontalGroup(
+        jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGap(0, 1070, Short.MAX_VALUE)
+    );
+    jPanel16Layout.setVerticalGroup(
+        jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGap(0, 720, Short.MAX_VALUE)
+    );
+
+    Main6.add(jPanel16, "card2");
+
+    AnnouncementManagement.add(Main6, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 0, 1070, 720));
+
+    jPanel1.add(AnnouncementManagement, "card8");
+
+    ProfileSettings.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    Nav7.setBackground(new java.awt.Color(0, 102, 102));
+    Nav7.setMinimumSize(new java.awt.Dimension(225, 720));
+    Nav7.setLayout(new java.awt.CardLayout());
+
+    jPanel21.setBackground(new java.awt.Color(0, 102, 102));
+    jPanel21.setMinimumSize(new java.awt.Dimension(220, 720));
+
+    Title7.setFont(new java.awt.Font("Serif", 0, 48)); // NOI18N
+    Title7.setForeground(new java.awt.Color(0, 51, 51));
+    Title7.setText("volta.");
+
+    DashBoardBtn7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    DashBoardBtn7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedDashboard.png"))); // NOI18N
+
+    ManageTeamBtn7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManageTeamBtn7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManageTeam.png"))); // NOI18N
+
+    ManagePlayerBtn7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManagePlayerBtn7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManagePlayer.png"))); // NOI18N
+
+    BookingBtn7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    BookingBtn7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedBooking.png"))); // NOI18N
+
+    ScheduleBtn7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ScheduleBtn7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedSchedule.png"))); // NOI18N
+
+    AnnouncementBtn7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    AnnouncementBtn7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedAnnouncement.png"))); // NOI18N
+
+    javax.swing.GroupLayout jPanel21Layout = new javax.swing.GroupLayout(jPanel21);
+    jPanel21.setLayout(jPanel21Layout);
+    jPanel21Layout.setHorizontalGroup(
+        jPanel21Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel21Layout.createSequentialGroup()
+            .addGroup(jPanel21Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel21Layout.createSequentialGroup()
+                    .addGap(118, 118, 118)
+                    .addComponent(Title7, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel21Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(DashBoardBtn7, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel21Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(ManageTeamBtn7, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel21Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ManagePlayerBtn7, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel21Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(BookingBtn7, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel21Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ScheduleBtn7, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel21Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(AnnouncementBtn7, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap(14, Short.MAX_VALUE))
+    );
+    jPanel21Layout.setVerticalGroup(
+        jPanel21Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel21Layout.createSequentialGroup()
+            .addGap(33, 33, 33)
+            .addComponent(Title7, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(89, 89, 89)
+            .addComponent(DashBoardBtn7)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(ManageTeamBtn7)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(ManagePlayerBtn7)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(BookingBtn7)
+            .addGap(12, 12, 12)
+            .addComponent(ScheduleBtn7, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(AnnouncementBtn7, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap())
+    );
+
+    // Code adding the component to the parent container - not shown here
+
+    DashBoardBtn7.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card3");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            DashBoardBtn7.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManageTeamBtn7.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card4");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManageTeamBtn7.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManagePlayerBtn7.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card5");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManagePlayerBtn7.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    BookingBtn7.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card6");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            BookingBtn7.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ScheduleBtn7.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card7");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ScheduleBtn7.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    AnnouncementBtn7.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card8");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            AnnouncementBtn7.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+
+    Nav7.add(jPanel21, "card2");
+
+    ProfileSettings.add(Nav7, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 240, 720));
+
+    Main7.setLayout(new java.awt.CardLayout());
+
+    javax.swing.GroupLayout jPanel18Layout = new javax.swing.GroupLayout(jPanel18);
+    jPanel18.setLayout(jPanel18Layout);
+    jPanel18Layout.setHorizontalGroup(
+        jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGap(0, 1070, Short.MAX_VALUE)
+    );
+    jPanel18Layout.setVerticalGroup(
+        jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGap(0, 720, Short.MAX_VALUE)
+    );
+
+    Main7.add(jPanel18, "card2");
+
+    ProfileSettings.add(Main7, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 0, 1070, 720));
+
+    jPanel1.add(ProfileSettings, "card9");
+
+    getContentPane().add(jPanel1);
+    jPanel1.setBounds(0, 0, 1310, 720);
+
+    pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    
     private void LoginBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginBtnActionPerformed
-        // Get the CardLayout from jPanel1
-    CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+    // Get the CardLayout from jPanel1
+    // Get user input
     
-    // Switch to the AdminDashboard card
-    cardLayout.show(jPanel1, "card3");
+    String username = LoginUsername.getText().trim();
+    String password = new String(LoginPassword.getPassword());
     
+    // Validation
+    if (username.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "Please Fill out Username");
+        return;
+    }
+    if (password.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "Please Fill out Password");
+        return;
+    }
+    
+    // Check if user exists and password matches
+    if (users.containsKey(username)) {
+        String storedPassword = users.get(username)[0];
+        if (password.equals(storedPassword)) {
+            // Login successful
+            JOptionPane.showMessageDialog(null, "Login successful!");
+            
+            // Clear form
+            LoginUsername.setText("");
+            LoginPassword.setText("");
+            
+            // Switch to AdminDashboard
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+            cardLayout.show(jPanel1, "card3");
+            
+            // You can set the welcome message with the user's name
+            String firstName = users.get(username)[1];
+            jLabel6.setText("Welcome Back " + firstName + "!");
+            
+        } else {
+            JOptionPane.showMessageDialog(null, "Invalid password!", 
+                                         "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    } else {
+        JOptionPane.showMessageDialog(null, "Username not found!", 
+                                     "Error", JOptionPane.ERROR_MESSAGE);
+    }
     }//GEN-LAST:event_LoginBtnActionPerformed
 
-    private void jPasswordField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jPasswordField1ActionPerformed
+    private void LoginPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginPasswordActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jPasswordField1ActionPerformed
+    }//GEN-LAST:event_LoginPasswordActionPerformed
 
-    private void jTextField2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField2ActionPerformed
+    private void LoginUsernameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginUsernameActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField2ActionPerformed
+    }//GEN-LAST:event_LoginUsernameActionPerformed
 
-    private void SignUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SignUpActionPerformed
+    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_SignUpActionPerformed
+    }//GEN-LAST:event_jTextField1ActionPerformed
+
+    private void jComboBox4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox4ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jComboBox4ActionPerformed
+
+    private void SignUpUsernameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SignUpUsernameActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_SignUpUsernameActionPerformed
+
+    private void SignUpPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SignUpPasswordActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_SignUpPasswordActionPerformed
+
+    private void SignUpBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SignUpBtnActionPerformed
+    // Get user input
+    String username = SignUpUsername.getText().trim();
+    String password = new String(SignUpPassword.getPassword());
+    String retypePassword = new String(SignUpRetypePw.getPassword());
+    String firstName = SignUpFirstName.getText().trim();
+    String lastName = SignUpLastName.getText().trim();
+    String dob = getDateFromChooser(); // Use your existing method
+    
+    // Validation
+    if (username.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "Please Fill out Username");
+        return;
+    }
+    if (password.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "Please Fill out Password");
+        return;
+    }
+    if (!password.equals(retypePassword)) {
+        JOptionPane.showMessageDialog(null, "Password and Retype Password do not match");
+        return;
+    }
+    if (firstName.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "Please Fill out First Name");
+        return;
+    }
+    if (lastName.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "Please Fill out Last Name");
+        return;
+    }
+    if (dob.isEmpty()) {
+        JOptionPane.showMessageDialog(null, "Please select Date of Birth");
+        return;
+    }
+    
+    // Check if username already exists
+    if (users.containsKey(username)) {
+        JOptionPane.showMessageDialog(null, "Username already exists. Please choose a different username.");
+        return;
+    }
+    
+    // Save user to memory and file
+    users.put(username, new String[]{password, firstName, lastName, dob});
+    saveUsersToFile();
+    
+    // Clear form
+    SignUpUsername.setText("");
+    SignUpPassword.setText("");
+    SignUpRetypePw.setText("");
+    SignUpFirstName.setText("");
+    SignUpLastName.setText("");
+    DateOfBirth.setSelectedDate(null);
+    
+    // Show success message
+    JOptionPane.showMessageDialog(null, "Registration successful! You can now login.");
+    
+    // Switch to login screen
+    CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+    cardLayout.show(jPanel1, "card1");
+    }//GEN-LAST:event_SignUpBtnActionPerformed
+
+    private void SignUpFirstNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SignUpFirstNameActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_SignUpFirstNameActionPerformed
+
+    private void SignUpLastNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SignUpLastNameActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_SignUpLastNameActionPerformed
+
+    private void SignUpRetypePwActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SignUpRetypePwActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_SignUpRetypePwActionPerformed
 
     /**
      * @param args the command line arguments
@@ -458,29 +2400,118 @@ public class Admin extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel AdminDashboard;
-    private javax.swing.JLabel AnnouncementBtn;
     private javax.swing.JLabel AnnouncementBtn1;
-    private javax.swing.JLabel BookingBtn;
+    private javax.swing.JLabel AnnouncementBtn2;
+    private javax.swing.JLabel AnnouncementBtn3;
+    private javax.swing.JLabel AnnouncementBtn4;
+    private javax.swing.JLabel AnnouncementBtn5;
+    private javax.swing.JLabel AnnouncementBtn6;
+    private javax.swing.JLabel AnnouncementBtn7;
+    private javax.swing.JPanel AnnouncementManagement;
     private javax.swing.JLabel BookingBtn1;
-    private javax.swing.JLabel DashBoardBtn;
+    private javax.swing.JLabel BookingBtn2;
+    private javax.swing.JLabel BookingBtn3;
+    private javax.swing.JLabel BookingBtn4;
+    private javax.swing.JLabel BookingBtn5;
+    private javax.swing.JLabel BookingBtn6;
+    private javax.swing.JLabel BookingBtn7;
+    private javax.swing.JPanel BookingManagement;
     private javax.swing.JLabel DashBoardBtn1;
-    private javax.swing.JPanel DashNav;
-    private javax.swing.JPanel DashNav2;
+    private javax.swing.JLabel DashBoardBtn2;
+    private javax.swing.JLabel DashBoardBtn3;
+    private javax.swing.JLabel DashBoardBtn4;
+    private javax.swing.JLabel DashBoardBtn5;
+    private javax.swing.JLabel DashBoardBtn6;
+    private javax.swing.JLabel DashBoardBtn7;
+    private datechooser.beans.DateChooserCombo DateOfBirth;
     private javax.swing.JPanel Login;
+    private javax.swing.JLabel LoginBg;
+    private javax.swing.JLabel LoginBg1;
     private javax.swing.JToggleButton LoginBtn;
-    private javax.swing.JPanel MainDash;
-    private javax.swing.JPanel MainDash2;
-    private javax.swing.JLabel ManagePlayer;
-    private javax.swing.JLabel ManagePlayer1;
-    private javax.swing.JLabel ManageTeamBtn;
-    private javax.swing.JLabel ScheduleBtn;
+    private javax.swing.JPasswordField LoginPassword;
+    private javax.swing.JLabel LoginSignUp;
+    private javax.swing.JTextField LoginUsername;
+    private javax.swing.JPanel Main1;
+    private javax.swing.JPanel Main2;
+    private javax.swing.JPanel Main3;
+    private javax.swing.JPanel Main4;
+    private javax.swing.JPanel Main5;
+    private javax.swing.JPanel Main6;
+    private javax.swing.JPanel Main7;
+    private javax.swing.JLabel ManagePlayerBtn1;
+    private javax.swing.JLabel ManagePlayerBtn2;
+    private javax.swing.JLabel ManagePlayerBtn3;
+    private javax.swing.JLabel ManagePlayerBtn4;
+    private javax.swing.JLabel ManagePlayerBtn5;
+    private javax.swing.JLabel ManagePlayerBtn6;
+    private javax.swing.JLabel ManagePlayerBtn7;
+    private javax.swing.JLabel ManageTeamBtn1;
+    private javax.swing.JLabel ManageTeamBtn2;
+    private javax.swing.JLabel ManageTeamBtn3;
+    private javax.swing.JLabel ManageTeamBtn4;
+    private javax.swing.JLabel ManageTeamBtn5;
+    private javax.swing.JLabel ManageTeamBtn6;
+    private javax.swing.JLabel ManageTeamBtn7;
+    private javax.swing.JPanel Nav1;
+    private javax.swing.JPanel Nav2;
+    private javax.swing.JPanel Nav3;
+    private javax.swing.JPanel Nav4;
+    private javax.swing.JPanel Nav5;
+    private javax.swing.JPanel Nav6;
+    private javax.swing.JPanel Nav7;
+    private javax.swing.JPanel PlayerManagement;
+    private javax.swing.JLabel ProfileBtn;
+    private javax.swing.JPanel ProfileSettings;
     private javax.swing.JLabel ScheduleBtn1;
-    private javax.swing.JToggleButton SignUp;
+    private javax.swing.JLabel ScheduleBtn2;
+    private javax.swing.JLabel ScheduleBtn3;
+    private javax.swing.JLabel ScheduleBtn4;
+    private javax.swing.JLabel ScheduleBtn5;
+    private javax.swing.JLabel ScheduleBtn6;
+    private javax.swing.JLabel ScheduleBtn7;
+    private javax.swing.JPanel ScheduleManagement;
+    private javax.swing.JPanel SignUp;
+    private javax.swing.JToggleButton SignUpBtn;
+    private javax.swing.JTextField SignUpFirstName;
+    private javax.swing.JTextField SignUpLastName;
+    private javax.swing.JPasswordField SignUpPassword;
+    private javax.swing.JPasswordField SignUpRetypePw;
+    private javax.swing.JTextField SignUpUsername;
     private javax.swing.JPanel TeamManagement;
+    private javax.swing.JLabel Title1;
+    private javax.swing.JLabel Title2;
+    private javax.swing.JLabel Title3;
+    private javax.swing.JLabel Title4;
+    private javax.swing.JLabel Title5;
+    private javax.swing.JLabel Title6;
+    private javax.swing.JLabel Title7;
+    private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton5;
+    private javax.swing.JButton jButton6;
+    private javax.swing.JButton jButton7;
+    private javax.swing.JComboBox<String> jComboBox4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
+    private javax.swing.JLabel jLabel24;
+    private javax.swing.JLabel jLabel25;
+    private javax.swing.JLabel jLabel26;
+    private javax.swing.JLabel jLabel27;
+    private javax.swing.JLabel jLabel28;
+    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -490,11 +2521,36 @@ public class Admin extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
-    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel11;
+    private javax.swing.JPanel jPanel12;
+    private javax.swing.JPanel jPanel14;
+    private javax.swing.JPanel jPanel16;
+    private javax.swing.JPanel jPanel18;
+    private javax.swing.JPanel jPanel19;
+    private javax.swing.JPanel jPanel20;
+    private javax.swing.JPanel jPanel21;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
-    private javax.swing.JPasswordField jPasswordField1;
-    private javax.swing.JTextField jTextField2;
+    private javax.swing.JPanel jPanel8;
+    private javax.swing.JPanel jPanel9;
+    private javax.swing.JScrollBar jScrollBar1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTable jTable1;
+    private javax.swing.JTable jTable2;
+    private javax.swing.JTextField jTextField1;
+    private javax.swing.JTextField jTextField10;
+    private javax.swing.JTextField jTextField11;
+    private javax.swing.JTextField jTextField12;
+    private javax.swing.JTextField jTextField13;
+    private javax.swing.JTextField jTextField14;
+    private javax.swing.JTextField jTextField3;
+    private javax.swing.JTextField jTextField4;
+    private javax.swing.JTextField jTextField5;
+    private javax.swing.JTextField jTextField6;
+    private javax.swing.JTextField jTextField7;
+    private javax.swing.JTextField jTextField8;
+    private javax.swing.JTextField jTextField9;
     // End of variables declaration//GEN-END:variables
 }
