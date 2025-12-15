@@ -1,5 +1,2 @@
-aaur,aaru,aarogya,thapa,12-08-2025
-no,123,hii,byhee,31-12-2027
-Manzal,54321,Manzeel,Mulmee,14-12-2025
-honey,12345,Shaira,Gurung,14-12-2025
-autarini,54321,Aarogay,Thapa,14-12-2025
+Aarogay.admin,12345,Aarogay,Thapa,14-12-2025
+honey.admin,54321,Shaira,Gurung,25-12-2006

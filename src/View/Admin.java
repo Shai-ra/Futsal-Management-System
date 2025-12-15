@@ -11,24 +11,55 @@ package View;
 import java.awt.CardLayout;
 import javax.swing.JOptionPane;
 import java.text.SimpleDateFormat; 
-import java.util.Date; 
-import datechooser.beans.DateChooserCombo;
-import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
+import javax.swing.*;
+import Controller.*;
+import Model.*;
+
 public class Admin extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Admin.class.getName());
-    private static final String USER_DATA_FILE = "users.txt";
-    private Map<String, String[]> users = new HashMap<>();
-    /**
-     * Creates new form AdminLogin
-     */
+    private UserController userController;
+
+    //Creates new form AdminLogin
     public Admin() {
-        initComponents();
-        loadUsersFromFile();
-        
+    initComponents();
+    userController = new UserController();
+    teamController = new TeamController();
+    playerController = new PlayerController();
+    loadUsersFromFile();
+    
+    // Load initial data to tables
+    loadTeamData();
+    loadPlayerData();
+    
+    // Setup table selection listeners
+    setupTableListeners();
+    
+    // Add action listeners to buttons
+    addActionListenersToTeamButtons();
+    addActionListenersToPlayerButtons();
     }
+    
+  // In Admin.java (add these methods)
+
+public JTextField getLoginUsernameField() { return LoginUsername; }
+public JPasswordField getLoginPasswordField() { return LoginPassword; }
+public JToggleButton getLoginBtn() { return LoginBtn; }
+
+public JTextField getSignUpUsernameField() { return SignUpUsername; }
+public JPasswordField getSignUpPasswordField() { return SignUpPassword; }
+public JPasswordField getSignUpRetypePwField() { return SignUpRetypePw; }
+public JTextField getSignUpFirstNameField() { return SignUpFirstName; }
+public JTextField getSignUpLastNameField() { return SignUpLastName; }
+public JToggleButton getSignUpBtn() { return SignUpBtn; }
+
+public JLabel getLoginSignUpLabel() { return LoginSignUp; }
+
+public JPanel getMainPanel() { return jPanel1; }
+
+public void setWelcomeMessage(String firstName) {
+    jLabel6.setText("Welcome Back " + firstName + "!");
+}
 
 private String getDateFromChooser() {
     try {
@@ -39,56 +70,201 @@ private String getDateFromChooser() {
             return sdf.format(selectedCalendar.getTime());
         }
     } catch (Exception e) {
-        e.printStackTrace();
+       // e.printStackTrace();
     }
     return "";
 }
 
+
+public void clearDateChooser() {
+    DateOfBirth.setSelectedDate(null);
+}  
 private void loadUsersFromFile() {
-    try {
-        File file = new File(USER_DATA_FILE);
-        if (!file.exists()) {
-            file.createNewFile();
-            return;
-        }
-        
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            String[] parts = line.split(",");
-            if (parts.length >= 4) {
-                users.put(parts[0], new String[]{parts[1], parts[2], parts[3], parts[4]});
+
+}
+//private void saveUsersToFile() {
+//}
+
+private void loadTeamData() {
+    teamController.readTeams((javax.swing.table.DefaultTableModel) TeamTable.getModel());
+}
+
+private void loadPlayerData() {
+    playerController.readPlayers((javax.swing.table.DefaultTableModel) PlayerTable.getModel());
+}
+
+private void clearTeamFields() {
+    TeamIDTextField.setText("");
+    TMTeamNameTextField.setText("");
+    ManagerTextField.setText("");
+    NoPlayerTextField.setText("");
+}
+
+private void clearPlayerFields() {
+    PlayerIDTextField.setText("");
+    PlayerNameTextField.setText("");
+    PlayerAgeTextField.setText("");
+    PlayerJerseyNoTextField.setText("");
+    PlayerPositionTextField.setText("");
+    PMTeamNameTextField.setText("");
+}
+
+private void setupTableListeners() {
+    // Team table selection listener
+    javax.swing.event.ListSelectionListener teamTableListener = new javax.swing.event.ListSelectionListener() {
+        @Override
+        public void valueChanged(javax.swing.event.ListSelectionEvent e) {
+            if (!e.getValueIsAdjusting()) {
+                int selectedRow = TeamTable.getSelectedRow();
+                if (selectedRow >= 0) {
+                    String teamId = TeamTable.getValueAt(selectedRow, 0).toString();
+                    teamController.loadTeamFromTable(teamId, TeamIDTextField, TMTeamNameTextField, 
+                                                      ManagerTextField, NoPlayerTextField);
+                }
             }
         }
-        reader.close();
-    } catch (IOException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error loading user data: " + e.getMessage(), 
-                                     "Error", JOptionPane.ERROR_MESSAGE);
-    }
-}
-
-private void saveUsersToFile() {
-    try {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(USER_DATA_FILE));
-        for (Map.Entry<String, String[]> entry : users.entrySet()) {
-            String[] userData = entry.getValue();
-            String line = entry.getKey() + "," + 
-                         userData[0] + "," + // password
-                         userData[1] + "," + // firstName
-                         userData[2] + "," + // lastName
-                         userData[3];        // dob
-            writer.write(line);
-            writer.newLine();
+    };
+    TeamTable.getSelectionModel().addListSelectionListener(teamTableListener);
+    
+    // Player table selection listener
+    javax.swing.event.ListSelectionListener playerTableListener = new javax.swing.event.ListSelectionListener() {
+        @Override
+        public void valueChanged(javax.swing.event.ListSelectionEvent e) {
+            if (!e.getValueIsAdjusting()) {
+                int selectedRow = PlayerTable.getSelectedRow();
+                if (selectedRow >= 0) {
+                    String playerId = PlayerTable.getValueAt(selectedRow, 0).toString();
+                    playerController.loadPlayerFromTable(playerId, PlayerIDTextField, PlayerNameTextField,
+                                                          PlayerAgeTextField, PlayerJerseyNoTextField,
+                                                          PlayerPositionTextField, PMTeamNameTextField);
+                }
+            }
         }
-        writer.close();
-    } catch (IOException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error saving user data: " + e.getMessage(), 
-                                     "Error", JOptionPane.ERROR_MESSAGE);
-    }
+    };
+    PlayerTable.getSelectionModel().addListSelectionListener(playerTableListener);
 }
 
+private void addActionListenersToTeamButtons() {
+    // Add Team Button
+    TMAddBtn.addActionListener(new java.awt.event.ActionListener() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            boolean success = teamController.addTeam(
+                TeamIDTextField.getText(),
+                TMTeamNameTextField.getText(),
+                ManagerTextField.getText(),
+                NoPlayerTextField.getText()
+            );
+            
+            if (success) {
+                loadTeamData();
+                clearTeamFields();
+            }
+        }
+    });
+    
+    // Update Team Button
+    TMUpdateBtn.addActionListener(new java.awt.event.ActionListener() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            boolean success = teamController.updateTeam(
+                TeamIDTextField.getText(),
+                TMTeamNameTextField.getText(),
+                ManagerTextField.getText(),
+                NoPlayerTextField.getText()
+            );
+            
+            if (success) {
+                loadTeamData();
+                clearTeamFields();
+            }
+        }
+    });
+    
+    // Delete Team Button
+    TMDeleteBtn.addActionListener(new java.awt.event.ActionListener() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            boolean success = teamController.deleteTeam(TeamIDTextField.getText());
+            
+            if (success) {
+                loadTeamData();
+                clearTeamFields();
+            }
+        }
+    });
+    
+    // Read Team Button
+    TMReadBtn.addActionListener(new java.awt.event.ActionListener() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            loadTeamData();
+        }
+    });
+}
+
+private void addActionListenersToPlayerButtons() {
+    // Add Player Button
+    PMAddBtn.addActionListener(new java.awt.event.ActionListener() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            boolean success = playerController.addPlayer(
+                PlayerIDTextField.getText(),
+                PlayerNameTextField.getText(),
+                PlayerAgeTextField.getText(),
+                PlayerJerseyNoTextField.getText(),
+                PlayerPositionTextField.getText(),
+                PMTeamNameTextField.getText()
+            );
+            
+            if (success) {
+                loadPlayerData();
+                clearPlayerFields();
+            }
+        }
+    });
+    
+    // Update Player Button
+    PMUpdateBtn.addActionListener(new java.awt.event.ActionListener() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            boolean success = playerController.updatePlayer(
+                PlayerIDTextField.getText(),
+                PlayerNameTextField.getText(),
+                PlayerAgeTextField.getText(),
+                PlayerJerseyNoTextField.getText(),
+                PlayerPositionTextField.getText(),
+                PMTeamNameTextField.getText()
+            );
+            
+            if (success) {
+                loadPlayerData();
+                clearPlayerFields();
+            }
+        }
+    });
+    
+    // Delete Player Button
+    PMDeleteBtn.addActionListener(new java.awt.event.ActionListener() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            boolean success = playerController.deletePlayer(PlayerIDTextField.getText());
+            
+            if (success) {
+                loadPlayerData();
+                clearPlayerFields();
+            }
+        }
+    });
+    
+    // Read Player Button
+    PMReadBtn.addActionListener(new java.awt.event.ActionListener() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            loadPlayerData();
+        }
+    });
+}            
 
 
     /**
@@ -139,6 +315,7 @@ private void saveUsersToFile() {
         AnnouncementBtn1 = new javax.swing.JLabel();
         Main1 = new javax.swing.JPanel();
         jPanel6 = new javax.swing.JPanel();
+        LocationBtn = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         ProfileBtn = new javax.swing.JLabel();
         jLabel17 = new javax.swing.JLabel();
@@ -159,20 +336,21 @@ private void saveUsersToFile() {
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jTextField3 = new javax.swing.JTextField();
-        jTextField4 = new javax.swing.JTextField();
-        jTextField5 = new javax.swing.JTextField();
-        jButton3 = new javax.swing.JButton();
+        TMTeamNameTextField = new javax.swing.JTextField();
+        ManagerTextField = new javax.swing.JTextField();
+        TeamIDTextField = new javax.swing.JTextField();
+        NoPlayerTextField = new javax.swing.JTextField();
         jLabel11 = new javax.swing.JLabel();
-        jTextField6 = new javax.swing.JTextField();
+        TMSearchTextField = new javax.swing.JTextField();
         jLabel12 = new javax.swing.JLabel();
-        jTextField7 = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        jButton5 = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
-        jButton7 = new javax.swing.JButton();
+        TeamTable = new javax.swing.JTable();
+        TMAddBtn = new javax.swing.JButton();
+        TMUpdateBtn = new javax.swing.JButton();
+        TMDeleteBtn = new javax.swing.JButton();
+        TMReadBtn = new javax.swing.JButton();
+        TMSortByComboBox = new javax.swing.JComboBox<>();
+        TMSearchComboBox = new javax.swing.JComboBox<>();
         PlayerManagement = new javax.swing.JPanel();
         Nav3 = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
@@ -187,24 +365,29 @@ private void saveUsersToFile() {
         jPanel9 = new javax.swing.JPanel();
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
-        jTextField8 = new javax.swing.JTextField();
+        PlayerNameTextField = new javax.swing.JTextField();
         jLabel15 = new javax.swing.JLabel();
-        jTextField9 = new javax.swing.JTextField();
+        PlayerIDTextField = new javax.swing.JTextField();
         jLabel16 = new javax.swing.JLabel();
-        jTextField10 = new javax.swing.JTextField();
+        PlayerAgeTextField = new javax.swing.JTextField();
         jLabel18 = new javax.swing.JLabel();
-        jTextField11 = new javax.swing.JTextField();
+        PlayerJerseyNoTextField = new javax.swing.JTextField();
         jLabel19 = new javax.swing.JLabel();
-        jTextField12 = new javax.swing.JTextField();
+        PlayerPositionTextField = new javax.swing.JTextField();
         jLabel20 = new javax.swing.JLabel();
         jLabel21 = new javax.swing.JLabel();
-        jTextField14 = new javax.swing.JTextField();
-        jComboBox4 = new javax.swing.JComboBox<>();
+        PMSearchTextField = new javax.swing.JTextField();
+        PMSortByComboBox = new javax.swing.JComboBox<>();
         jScrollBar1 = new javax.swing.JScrollBar();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTable2 = new javax.swing.JTable();
+        PlayerTable = new javax.swing.JTable();
         jLabel22 = new javax.swing.JLabel();
-        jTextField13 = new javax.swing.JTextField();
+        PMTeamNameTextField = new javax.swing.JTextField();
+        PMAddBtn = new javax.swing.JButton();
+        PMUpdateBtn = new javax.swing.JButton();
+        PMDeleteBtn = new javax.swing.JButton();
+        PMReadBtn = new javax.swing.JButton();
+        PMSearchComboBox = new javax.swing.JComboBox<>();
         BookingManagement = new javax.swing.JPanel();
         Nav4 = new javax.swing.JPanel();
         jPanel20 = new javax.swing.JPanel();
@@ -253,6 +436,19 @@ private void saveUsersToFile() {
         AnnouncementBtn7 = new javax.swing.JLabel();
         Main7 = new javax.swing.JPanel();
         jPanel18 = new javax.swing.JPanel();
+        LogOutBtn = new javax.swing.JLabel();
+        Location = new javax.swing.JPanel();
+        Nav8 = new javax.swing.JPanel();
+        jPanel22 = new javax.swing.JPanel();
+        Title8 = new javax.swing.JLabel();
+        DashBoardBtn8 = new javax.swing.JLabel();
+        ManageTeamBtn8 = new javax.swing.JLabel();
+        ManagePlayerBtn8 = new javax.swing.JLabel();
+        BookingBtn8 = new javax.swing.JLabel();
+        ScheduleBtn8 = new javax.swing.JLabel();
+        AnnouncementBtn8 = new javax.swing.JLabel();
+        Main8 = new javax.swing.JPanel();
+        jPanel23 = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(1311, 720));
@@ -658,6 +854,25 @@ private void saveUsersToFile() {
 
     jPanel6.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
+    LocationBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/Location.png"))); // NOI18N
+    jPanel6.add(LocationBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(850, 100, -1, -1));
+    LocationBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card10");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            LocationBtn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+
     jLabel6.setBackground(new java.awt.Color(0, 153, 204));
     jLabel6.setFont(new java.awt.Font("Serif", 0, 36)); // NOI18N
     jLabel6.setForeground(new java.awt.Color(0, 153, 153));
@@ -667,7 +882,7 @@ private void saveUsersToFile() {
     ProfileBtn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
     ProfileBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/ProfileIcon.png"))); // NOI18N
     ProfileBtn.setText(".");
-    jPanel6.add(ProfileBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(980, 100, 80, 70));
+    jPanel6.add(ProfileBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 100, 80, 60));
     ProfileBtn.addMouseListener(new java.awt.event.MouseAdapter() {
         @Override
         public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -896,32 +1111,38 @@ private void saveUsersToFile() {
     jLabel10.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
     jLabel10.setText("Manager");
 
-    jTextField1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-    jTextField1.addActionListener(new java.awt.event.ActionListener() {
+    TMTeamNameTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    TMTeamNameTextField.addActionListener(new java.awt.event.ActionListener() {
         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jTextField1ActionPerformed(evt);
+            TMTeamNameTextFieldActionPerformed(evt);
         }
     });
 
-    jTextField3.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    ManagerTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    ManagerTextField.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            ManagerTextFieldActionPerformed(evt);
+        }
+    });
 
-    jTextField4.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    TeamIDTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
 
-    jTextField5.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-
-    jButton3.setText("jButton1");
+    NoPlayerTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
 
     jLabel11.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
     jLabel11.setText("Search");
 
-    jTextField6.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    TMSearchTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    TMSearchTextField.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            TMSearchTextFieldActionPerformed(evt);
+        }
+    });
 
     jLabel12.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
     jLabel12.setText("Sort By");
 
-    jTextField7.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-
-    jTable1.setModel(new javax.swing.table.DefaultTableModel(
+    TeamTable.setModel(new javax.swing.table.DefaultTableModel(
         new Object [][] {
             {null, null, null, null},
             {null, null, null, null},
@@ -945,13 +1166,19 @@ private void saveUsersToFile() {
             "Team ID", "Team Name", "Manager", "No. Player"
         }
     ));
-    jScrollPane1.setViewportView(jTable1);
+    jScrollPane1.setViewportView(TeamTable);
 
-    jButton5.setText("jButton1");
+    TMAddBtn.setText("Add");
 
-    jButton6.setText("jButton1");
+    TMUpdateBtn.setText("Update");
 
-    jButton7.setText("jButton1");
+    TMDeleteBtn.setText("Delete");
+
+    TMReadBtn.setText("Read");
+
+    TMSortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Team ID", "No. Player" }));
+
+    TMSearchComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Team ID", "Team Name", "Manager", "No. Player" }));
 
     javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
     jPanel10.setLayout(jPanel10Layout);
@@ -965,45 +1192,46 @@ private void saveUsersToFile() {
                         .addGroup(jPanel10Layout.createSequentialGroup()
                             .addComponent(jLabel9)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(NoPlayerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
                             .addComponent(jLabel10)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(ManagerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGroup(jPanel10Layout.createSequentialGroup()
                             .addComponent(jLabel8)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(TeamIDTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 417, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
                             .addComponent(jLabel7)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 63, Short.MAX_VALUE)
-                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(TMTeamNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addGroup(jPanel10Layout.createSequentialGroup()
                     .addGap(141, 141, 141)
                     .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(jButton6, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(TMDeleteBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(TMAddBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGap(90, 90, 90)
                     .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(TMUpdateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(TMReadBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))))
             .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel10Layout.createSequentialGroup()
                     .addGap(112, 112, 112)
                     .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jLabel11)
+                        .addComponent(jLabel12))
+                    .addGap(21, 21, 21)
+                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(jPanel10Layout.createSequentialGroup()
-                            .addComponent(jLabel11)
-                            .addGap(28, 28, 28)
-                            .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(jPanel10Layout.createSequentialGroup()
-                            .addComponent(jLabel12)
-                            .addGap(18, 18, 18)
-                            .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(TMSearchComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(TMSearchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(TMSortByComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addContainerGap(78, Short.MAX_VALUE))
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 47, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 420, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGap(31, 31, 31))))
     );
     jPanel10Layout.setVerticalGroup(
@@ -1011,37 +1239,38 @@ private void saveUsersToFile() {
         .addGroup(jPanel10Layout.createSequentialGroup()
             .addGap(63, 63, 63)
             .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGap(62, 62, 62)
+            .addGap(60, 60, 60)
             .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(jLabel8)
-                .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(TeamIDTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(TMSearchComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(TMSearchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addGap(35, 35, 35)
             .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(jLabel7)
-                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(TMTeamNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(TMSortByComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addGap(30, 30, 30)
             .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel10Layout.createSequentialGroup()
                     .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel10)
-                        .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(ManagerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGap(32, 32, 32)
                     .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel9)
-                        .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(NoPlayerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGap(56, 56, 56)
                     .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(TMAddBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(TMUpdateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addGap(18, 18, 18)
             .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(jButton6, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(TMDeleteBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(TMReadBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addContainerGap(97, Short.MAX_VALUE))
     );
 
@@ -1243,27 +1472,27 @@ private void saveUsersToFile() {
     jLabel14.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
     jLabel14.setText("Player ID");
 
-    jTextField8.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    PlayerNameTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
 
     jLabel15.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
-    jLabel15.setText("Team");
+    jLabel15.setText("Team Name");
 
-    jTextField9.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    PlayerIDTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
 
     jLabel16.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
     jLabel16.setText("Age");
 
-    jTextField10.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    PlayerAgeTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
 
     jLabel18.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
     jLabel18.setText("Jersey No");
 
-    jTextField11.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    PlayerJerseyNoTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
 
     jLabel19.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
     jLabel19.setText("Position");
 
-    jTextField12.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    PlayerPositionTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
 
     jLabel20.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
     jLabel20.setText("Search");
@@ -1271,16 +1500,16 @@ private void saveUsersToFile() {
     jLabel21.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
     jLabel21.setText("Sort By");
 
-    jTextField14.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    PMSearchTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
 
-    jComboBox4.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-    jComboBox4.addActionListener(new java.awt.event.ActionListener() {
+    PMSortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Player ID", "Age", "Jersey" }));
+    PMSortByComboBox.addActionListener(new java.awt.event.ActionListener() {
         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jComboBox4ActionPerformed(evt);
+            PMSortByComboBoxActionPerformed(evt);
         }
     });
 
-    jTable2.setModel(new javax.swing.table.DefaultTableModel(
+    PlayerTable.setModel(new javax.swing.table.DefaultTableModel(
         new Object [][] {
             {null, null, null, null, null, null},
             {null, null, null, null, null, null},
@@ -1308,58 +1537,96 @@ private void saveUsersToFile() {
             return types [columnIndex];
         }
     });
-    jScrollPane2.setViewportView(jTable2);
+    jScrollPane2.setViewportView(PlayerTable);
 
     jLabel22.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
     jLabel22.setText("Player Name");
 
-    jTextField13.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    PMTeamNameTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+
+    PMAddBtn.setText("Add");
+
+    PMUpdateBtn.setText("Update");
+    PMUpdateBtn.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            PMUpdateBtnActionPerformed(evt);
+        }
+    });
+
+    PMDeleteBtn.setText("Delete");
+
+    PMReadBtn.setText("Read");
+
+    PMSearchComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Player ID", "Player Name", "Age", "Jersey", "Position", "Team" }));
+    PMSearchComboBox.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            PMSearchComboBoxActionPerformed(evt);
+        }
+    });
 
     javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
     jPanel9.setLayout(jPanel9Layout);
     jPanel9Layout.setHorizontalGroup(
         jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
         .addGroup(jPanel9Layout.createSequentialGroup()
-            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                .addGroup(jPanel9Layout.createSequentialGroup()
-                    .addGap(118, 118, 118)
-                    .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 417, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(jPanel9Layout.createSequentialGroup()
-                    .addGap(104, 104, 104)
-                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel9Layout.createSequentialGroup()
-                            .addComponent(jLabel14)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jTextField9, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(jPanel9Layout.createSequentialGroup()
-                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel15)
-                                .addComponent(jLabel16)
-                                .addComponent(jLabel18)
-                                .addComponent(jLabel19)
-                                .addComponent(jLabel22))
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jTextField8, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jTextField10, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jTextField11, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jTextField12, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jTextField13, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))))))
             .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel9Layout.createSequentialGroup()
-                    .addGap(91, 91, 91)
+                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(jPanel9Layout.createSequentialGroup()
+                            .addGap(118, 118, 118)
+                            .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 417, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel9Layout.createSequentialGroup()
+                            .addGap(104, 104, 104)
+                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(jPanel9Layout.createSequentialGroup()
+                                    .addComponent(jLabel14)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(PlayerIDTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(jPanel9Layout.createSequentialGroup()
+                                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(jLabel15)
+                                        .addComponent(jLabel16)
+                                        .addComponent(jLabel18)
+                                        .addComponent(jLabel19)
+                                        .addComponent(jLabel22))
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(PlayerNameTextField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(PlayerAgeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(PlayerJerseyNoTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(PlayerPositionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(PMTeamNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))))))
                     .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel21)
-                        .addComponent(jLabel20))
-                    .addGap(18, 18, 18)
-                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jTextField14, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jComboBox4, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel9Layout.createSequentialGroup()
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
+                        .addGroup(jPanel9Layout.createSequentialGroup()
+                            .addGap(91, 91, 91)
+                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(jPanel9Layout.createSequentialGroup()
+                                    .addComponent(jLabel21)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                    .addComponent(PMSortByComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(jPanel9Layout.createSequentialGroup()
+                                    .addComponent(jLabel20)
+                                    .addGap(18, 18, 18)
+                                    .addComponent(PMSearchComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGap(16, 16, 16)
+                                    .addComponent(PMSearchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 151, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel9Layout.createSequentialGroup()
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))))
+                .addGroup(jPanel9Layout.createSequentialGroup()
+                    .addGap(159, 159, 159)
+                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(jPanel9Layout.createSequentialGroup()
+                            .addComponent(PMDeleteBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(PMReadBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel9Layout.createSequentialGroup()
+                            .addComponent(PMAddBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGap(72, 72, 72)
+                            .addComponent(PMUpdateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
             .addComponent(jScrollBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
     );
     jPanel9Layout.setVerticalGroup(
@@ -1369,42 +1636,51 @@ private void saveUsersToFile() {
                 .addGroup(jPanel9Layout.createSequentialGroup()
                     .addGap(68, 68, 68)
                     .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(60, 60, 60)
+                    .addGap(56, 56, 56)
                     .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel14)
-                        .addComponent(jTextField9, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(PlayerIDTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel20)
-                        .addComponent(jTextField14, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(PMSearchComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(PMSearchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGap(18, 18, 18)
                     .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jComboBox4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 31, Short.MAX_VALUE)
-                        .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jTextField8, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel21))
                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel9Layout.createSequentialGroup()
-                            .addGap(0, 0, Short.MAX_VALUE)
-                            .addComponent(jLabel22)))
+                            .addGap(0, 19, Short.MAX_VALUE)
+                            .addComponent(jLabel22))
+                        .addComponent(PMSortByComboBox, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
+                        .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(PlayerNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel21)))
                     .addGap(18, 18, 18)
                     .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(jPanel9Layout.createSequentialGroup()
                             .addGap(7, 7, 7)
                             .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jLabel15)
-                                .addComponent(jTextField13, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(PMTeamNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGap(18, 18, 18)
                             .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jLabel16)
-                                .addComponent(jTextField10, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(PlayerAgeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGap(18, 18, 18)
                             .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jLabel18)
-                                .addComponent(jTextField11, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(PlayerJerseyNoTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGap(18, 18, 18)
                             .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jLabel19)
-                                .addComponent(jTextField12, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(PlayerPositionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGap(165, 165, 165))
+                    .addGap(18, 18, 18)
+                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(PMUpdateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(PMAddBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(PMDeleteBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(PMReadBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGap(53, 53, 53))
                 .addComponent(jScrollBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addContainerGap())
     );
@@ -2206,22 +2482,250 @@ private void saveUsersToFile() {
 
     Main7.setLayout(new java.awt.CardLayout());
 
+    LogOutBtn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    LogOutBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/Logout.png"))); // NOI18N
+
     javax.swing.GroupLayout jPanel18Layout = new javax.swing.GroupLayout(jPanel18);
     jPanel18.setLayout(jPanel18Layout);
     jPanel18Layout.setHorizontalGroup(
         jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGap(0, 1070, Short.MAX_VALUE)
+        .addGroup(jPanel18Layout.createSequentialGroup()
+            .addGap(379, 379, 379)
+            .addComponent(LogOutBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(473, Short.MAX_VALUE))
     );
     jPanel18Layout.setVerticalGroup(
         jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGap(0, 720, Short.MAX_VALUE)
+        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel18Layout.createSequentialGroup()
+            .addContainerGap(485, Short.MAX_VALUE)
+            .addComponent(LogOutBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(177, 177, 177))
     );
+
+    LogOutBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card1");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            LogOutBtn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
 
     Main7.add(jPanel18, "card2");
 
     ProfileSettings.add(Main7, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 0, 1070, 720));
 
     jPanel1.add(ProfileSettings, "card9");
+
+    Location.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    Nav8.setBackground(new java.awt.Color(0, 102, 102));
+    Nav8.setMinimumSize(new java.awt.Dimension(225, 720));
+    Nav8.setLayout(new java.awt.CardLayout());
+
+    jPanel22.setBackground(new java.awt.Color(0, 102, 102));
+    jPanel22.setMinimumSize(new java.awt.Dimension(220, 720));
+
+    Title8.setFont(new java.awt.Font("Serif", 0, 48)); // NOI18N
+    Title8.setForeground(new java.awt.Color(0, 51, 51));
+    Title8.setText("volta.");
+
+    DashBoardBtn8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    DashBoardBtn8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedDashboard.png"))); // NOI18N
+
+    ManageTeamBtn8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManageTeamBtn8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManageTeam.png"))); // NOI18N
+
+    ManagePlayerBtn8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ManagePlayerBtn8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedManagePlayer.png"))); // NOI18N
+
+    BookingBtn8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    BookingBtn8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedBooking.png"))); // NOI18N
+
+    ScheduleBtn8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    ScheduleBtn8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedSchedule.png"))); // NOI18N
+
+    AnnouncementBtn8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    AnnouncementBtn8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/UnclickedAnnouncement.png"))); // NOI18N
+
+    javax.swing.GroupLayout jPanel22Layout = new javax.swing.GroupLayout(jPanel22);
+    jPanel22.setLayout(jPanel22Layout);
+    jPanel22Layout.setHorizontalGroup(
+        jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel22Layout.createSequentialGroup()
+            .addGroup(jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel22Layout.createSequentialGroup()
+                    .addGap(118, 118, 118)
+                    .addComponent(Title8, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel22Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(DashBoardBtn8, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel22Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addComponent(ManageTeamBtn8, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel22Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ManagePlayerBtn8, javax.swing.GroupLayout.PREFERRED_SIZE, 216, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel22Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(BookingBtn8, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel22Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(ScheduleBtn8, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel22Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(AnnouncementBtn8, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap(14, Short.MAX_VALUE))
+    );
+    jPanel22Layout.setVerticalGroup(
+        jPanel22Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel22Layout.createSequentialGroup()
+            .addGap(33, 33, 33)
+            .addComponent(Title8, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(89, 89, 89)
+            .addComponent(DashBoardBtn8)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(ManageTeamBtn8)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(ManagePlayerBtn8)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(BookingBtn8)
+            .addGap(12, 12, 12)
+            .addComponent(ScheduleBtn8, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(AnnouncementBtn8, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap())
+    );
+
+    // Code adding the component to the parent container - not shown here
+
+    DashBoardBtn8.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card3");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            DashBoardBtn8.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManageTeamBtn8.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card4");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManageTeamBtn8.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ManagePlayerBtn8.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card5");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ManagePlayerBtn8.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    BookingBtn8.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card6");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            BookingBtn8.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    ScheduleBtn8.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card7");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            ScheduleBtn8.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+    AnnouncementBtn8.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            System.out.print("Button clicked");
+            // Get the CardLayout from jPanel1
+            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+
+            // Switch to the AdminDashboard card
+            cardLayout.show(jPanel1, "card8");
+        }
+
+        @Override
+        public void mouseEntered(java.awt.event.MouseEvent e) {
+            AnnouncementBtn8.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        }
+    });
+
+    Nav8.add(jPanel22, "card2");
+
+    Location.add(Nav8, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 240, 720));
+
+    Main8.setLayout(new java.awt.CardLayout());
+
+    javax.swing.GroupLayout jPanel23Layout = new javax.swing.GroupLayout(jPanel23);
+    jPanel23.setLayout(jPanel23Layout);
+    jPanel23Layout.setHorizontalGroup(
+        jPanel23Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGap(0, 1070, Short.MAX_VALUE)
+    );
+    jPanel23Layout.setVerticalGroup(
+        jPanel23Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGap(0, 720, Short.MAX_VALUE)
+    );
+
+    Main8.add(jPanel23, "card2");
+
+    Location.add(Main8, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 0, 1070, 720));
+
+    jPanel1.add(Location, "card10");
 
     getContentPane().add(jPanel1);
     jPanel1.setBounds(0, 0, 1310, 720);
@@ -2231,48 +2735,52 @@ private void saveUsersToFile() {
 
     
     private void LoginBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginBtnActionPerformed
-    // Get the CardLayout from jPanel1
-    // Get user input
-    
+        // Get user input
     String username = LoginUsername.getText().trim();
     String password = new String(LoginPassword.getPassword());
     
-    // Validation
+    // Basic validation
     if (username.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Please Fill out Username");
-        return;
-    }
-    if (password.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Please Fill out Password");
+        JOptionPane.showMessageDialog(this, "Please enter username", 
+                                     "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
     
-    // Check if user exists and password matches
-    if (users.containsKey(username)) {
-        String storedPassword = users.get(username)[0];
-        if (password.equals(storedPassword)) {
-            // Login successful
-            JOptionPane.showMessageDialog(null, "Login successful!");
-            
-            // Clear form
-            LoginUsername.setText("");
-            LoginPassword.setText("");
-            
-            // Switch to AdminDashboard
-            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
-            cardLayout.show(jPanel1, "card3");
-            
-            // You can set the welcome message with the user's name
-            String firstName = users.get(username)[1];
-            jLabel6.setText("Welcome Back " + firstName + "!");
-            
-        } else {
-            JOptionPane.showMessageDialog(null, "Invalid password!", 
-                                         "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    } else {
-        JOptionPane.showMessageDialog(null, "Username not found!", 
+    if (password.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Please enter password", 
                                      "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+    
+    // Check for admin privilege
+    if (!username.endsWith(".admin")) {
+        JOptionPane.showMessageDialog(this, 
+            "Access denied! Admin usernames must end with '.admin'", 
+            "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+    
+    // Call controller to login
+    User user = userController.loginUser(username, password);
+    
+    if (user != null) {
+        // Login successful
+        JOptionPane.showMessageDialog(this, "Login successful!");
+        
+        // Clear form
+        LoginUsername.setText("");
+        LoginPassword.setText("");
+        
+        // Switch to AdminDashboard
+        CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+        cardLayout.show(jPanel1, "card3");
+        
+        // Set welcome message
+        setWelcomeMessage(user.getFirstName());
+    } else {
+        JOptionPane.showMessageDialog(this, 
+            "Invalid username or password", 
+            "Error", JOptionPane.ERROR_MESSAGE);
     }
     }//GEN-LAST:event_LoginBtnActionPerformed
 
@@ -2284,13 +2792,13 @@ private void saveUsersToFile() {
         // TODO add your handling code here:
     }//GEN-LAST:event_LoginUsernameActionPerformed
 
-    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
+    private void TMTeamNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TMTeamNameTextFieldActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField1ActionPerformed
+    }//GEN-LAST:event_TMTeamNameTextFieldActionPerformed
 
-    private void jComboBox4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox4ActionPerformed
+    private void PMSortByComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PMSortByComboBoxActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jComboBox4ActionPerformed
+    }//GEN-LAST:event_PMSortByComboBoxActionPerformed
 
     private void SignUpUsernameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SignUpUsernameActionPerformed
         // TODO add your handling code here:
@@ -2301,64 +2809,86 @@ private void saveUsersToFile() {
     }//GEN-LAST:event_SignUpPasswordActionPerformed
 
     private void SignUpBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SignUpBtnActionPerformed
-    // Get user input
+        // Get user input
     String username = SignUpUsername.getText().trim();
     String password = new String(SignUpPassword.getPassword());
     String retypePassword = new String(SignUpRetypePw.getPassword());
     String firstName = SignUpFirstName.getText().trim();
     String lastName = SignUpLastName.getText().trim();
-    String dob = getDateFromChooser(); // Use your existing method
+    String dob = getDateFromChooser();
     
     // Validation
     if (username.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Please Fill out Username");
+        JOptionPane.showMessageDialog(this, "Please enter username", 
+                                     "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
+    
     if (password.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Please Fill out Password");
+        JOptionPane.showMessageDialog(this, "Please enter password", 
+                                     "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
+    
     if (!password.equals(retypePassword)) {
-        JOptionPane.showMessageDialog(null, "Password and Retype Password do not match");
+        JOptionPane.showMessageDialog(this, 
+            "Password and Retype Password do not match", 
+            "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
+    
     if (firstName.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Please Fill out First Name");
+        JOptionPane.showMessageDialog(this, "Please enter first name", 
+                                     "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
+    
     if (lastName.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Please Fill out Last Name");
+        JOptionPane.showMessageDialog(this, "Please enter last name", 
+                                     "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
+    
     if (dob.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "Please select Date of Birth");
+        JOptionPane.showMessageDialog(this, "Please select date of birth", 
+                                     "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
     
-    // Check if username already exists
-    if (users.containsKey(username)) {
-        JOptionPane.showMessageDialog(null, "Username already exists. Please choose a different username.");
+    // Check if username ends with .admin for admin registration
+    if (!username.endsWith(".admin")) {
+        JOptionPane.showMessageDialog(this, 
+            "Admin usernames must end with '.admin'", 
+            "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
     
-    // Save user to memory and file
-    users.put(username, new String[]{password, firstName, lastName, dob});
-    saveUsersToFile();
+    // Call controller to register
+    boolean success = userController.registerUser(username, password, 
+        retypePassword, firstName, lastName, dob);
     
-    // Clear form
-    SignUpUsername.setText("");
-    SignUpPassword.setText("");
-    SignUpRetypePw.setText("");
-    SignUpFirstName.setText("");
-    SignUpLastName.setText("");
-    DateOfBirth.setSelectedDate(null);
-    
-    // Show success message
-    JOptionPane.showMessageDialog(null, "Registration successful! You can now login.");
-    
-    // Switch to login screen
-    CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
-    cardLayout.show(jPanel1, "card1");
+    if (success) {
+        // Registration successful
+        JOptionPane.showMessageDialog(this, 
+            "Registration successful! You can now login.");
+        
+        // Clear form
+        SignUpUsername.setText("");
+        SignUpPassword.setText("");
+        SignUpRetypePw.setText("");
+        SignUpFirstName.setText("");
+        SignUpLastName.setText("");
+        clearDateChooser();
+        
+        // Switch to login screen
+        CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
+        cardLayout.show(jPanel1, "card1");
+    } else {
+        // Registration failed
+        JOptionPane.showMessageDialog(this, 
+            "Registration failed. Username might already exist.", 
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }
     }//GEN-LAST:event_SignUpBtnActionPerformed
 
     private void SignUpFirstNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SignUpFirstNameActionPerformed
@@ -2372,6 +2902,22 @@ private void saveUsersToFile() {
     private void SignUpRetypePwActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SignUpRetypePwActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_SignUpRetypePwActionPerformed
+
+    private void PMUpdateBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PMUpdateBtnActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_PMUpdateBtnActionPerformed
+
+    private void ManagerTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ManagerTextFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_ManagerTextFieldActionPerformed
+
+    private void TMSearchTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TMSearchTextFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_TMSearchTextFieldActionPerformed
+
+    private void PMSearchComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PMSearchComboBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_PMSearchComboBoxActionPerformed
 
     /**
      * @param args the command line arguments
@@ -2396,8 +2942,11 @@ private void saveUsersToFile() {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new Admin().setVisible(true));
+           
     }
-
+final TeamController teamController;
+final PlayerController playerController;
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel AdminDashboard;
     private javax.swing.JLabel AnnouncementBtn1;
@@ -2407,6 +2956,7 @@ private void saveUsersToFile() {
     private javax.swing.JLabel AnnouncementBtn5;
     private javax.swing.JLabel AnnouncementBtn6;
     private javax.swing.JLabel AnnouncementBtn7;
+    private javax.swing.JLabel AnnouncementBtn8;
     private javax.swing.JPanel AnnouncementManagement;
     private javax.swing.JLabel BookingBtn1;
     private javax.swing.JLabel BookingBtn2;
@@ -2415,6 +2965,7 @@ private void saveUsersToFile() {
     private javax.swing.JLabel BookingBtn5;
     private javax.swing.JLabel BookingBtn6;
     private javax.swing.JLabel BookingBtn7;
+    private javax.swing.JLabel BookingBtn8;
     private javax.swing.JPanel BookingManagement;
     private javax.swing.JLabel DashBoardBtn1;
     private javax.swing.JLabel DashBoardBtn2;
@@ -2423,7 +2974,11 @@ private void saveUsersToFile() {
     private javax.swing.JLabel DashBoardBtn5;
     private javax.swing.JLabel DashBoardBtn6;
     private javax.swing.JLabel DashBoardBtn7;
+    private javax.swing.JLabel DashBoardBtn8;
     private datechooser.beans.DateChooserCombo DateOfBirth;
+    private javax.swing.JPanel Location;
+    private javax.swing.JLabel LocationBtn;
+    private javax.swing.JLabel LogOutBtn;
     private javax.swing.JPanel Login;
     private javax.swing.JLabel LoginBg;
     private javax.swing.JLabel LoginBg1;
@@ -2438,6 +2993,7 @@ private void saveUsersToFile() {
     private javax.swing.JPanel Main5;
     private javax.swing.JPanel Main6;
     private javax.swing.JPanel Main7;
+    private javax.swing.JPanel Main8;
     private javax.swing.JLabel ManagePlayerBtn1;
     private javax.swing.JLabel ManagePlayerBtn2;
     private javax.swing.JLabel ManagePlayerBtn3;
@@ -2445,6 +3001,7 @@ private void saveUsersToFile() {
     private javax.swing.JLabel ManagePlayerBtn5;
     private javax.swing.JLabel ManagePlayerBtn6;
     private javax.swing.JLabel ManagePlayerBtn7;
+    private javax.swing.JLabel ManagePlayerBtn8;
     private javax.swing.JLabel ManageTeamBtn1;
     private javax.swing.JLabel ManageTeamBtn2;
     private javax.swing.JLabel ManageTeamBtn3;
@@ -2452,6 +3009,8 @@ private void saveUsersToFile() {
     private javax.swing.JLabel ManageTeamBtn5;
     private javax.swing.JLabel ManageTeamBtn6;
     private javax.swing.JLabel ManageTeamBtn7;
+    private javax.swing.JLabel ManageTeamBtn8;
+    private javax.swing.JTextField ManagerTextField;
     private javax.swing.JPanel Nav1;
     private javax.swing.JPanel Nav2;
     private javax.swing.JPanel Nav3;
@@ -2459,7 +3018,23 @@ private void saveUsersToFile() {
     private javax.swing.JPanel Nav5;
     private javax.swing.JPanel Nav6;
     private javax.swing.JPanel Nav7;
+    private javax.swing.JPanel Nav8;
+    private javax.swing.JTextField NoPlayerTextField;
+    private javax.swing.JButton PMAddBtn;
+    private javax.swing.JButton PMDeleteBtn;
+    private javax.swing.JButton PMReadBtn;
+    private javax.swing.JComboBox<String> PMSearchComboBox;
+    private javax.swing.JTextField PMSearchTextField;
+    private javax.swing.JComboBox<String> PMSortByComboBox;
+    private javax.swing.JTextField PMTeamNameTextField;
+    private javax.swing.JButton PMUpdateBtn;
+    private javax.swing.JTextField PlayerAgeTextField;
+    private javax.swing.JTextField PlayerIDTextField;
+    private javax.swing.JTextField PlayerJerseyNoTextField;
     private javax.swing.JPanel PlayerManagement;
+    private javax.swing.JTextField PlayerNameTextField;
+    private javax.swing.JTextField PlayerPositionTextField;
+    private javax.swing.JTable PlayerTable;
     private javax.swing.JLabel ProfileBtn;
     private javax.swing.JPanel ProfileSettings;
     private javax.swing.JLabel ScheduleBtn1;
@@ -2469,6 +3044,7 @@ private void saveUsersToFile() {
     private javax.swing.JLabel ScheduleBtn5;
     private javax.swing.JLabel ScheduleBtn6;
     private javax.swing.JLabel ScheduleBtn7;
+    private javax.swing.JLabel ScheduleBtn8;
     private javax.swing.JPanel ScheduleManagement;
     private javax.swing.JPanel SignUp;
     private javax.swing.JToggleButton SignUpBtn;
@@ -2477,7 +3053,17 @@ private void saveUsersToFile() {
     private javax.swing.JPasswordField SignUpPassword;
     private javax.swing.JPasswordField SignUpRetypePw;
     private javax.swing.JTextField SignUpUsername;
+    private javax.swing.JButton TMAddBtn;
+    private javax.swing.JButton TMDeleteBtn;
+    private javax.swing.JButton TMReadBtn;
+    private javax.swing.JComboBox<String> TMSearchComboBox;
+    private javax.swing.JTextField TMSearchTextField;
+    private javax.swing.JComboBox<String> TMSortByComboBox;
+    private javax.swing.JTextField TMTeamNameTextField;
+    private javax.swing.JButton TMUpdateBtn;
+    private javax.swing.JTextField TeamIDTextField;
     private javax.swing.JPanel TeamManagement;
+    private javax.swing.JTable TeamTable;
     private javax.swing.JLabel Title1;
     private javax.swing.JLabel Title2;
     private javax.swing.JLabel Title3;
@@ -2485,11 +3071,7 @@ private void saveUsersToFile() {
     private javax.swing.JLabel Title5;
     private javax.swing.JLabel Title6;
     private javax.swing.JLabel Title7;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton6;
-    private javax.swing.JButton jButton7;
-    private javax.swing.JComboBox<String> jComboBox4;
+    private javax.swing.JLabel Title8;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -2529,6 +3111,8 @@ private void saveUsersToFile() {
     private javax.swing.JPanel jPanel19;
     private javax.swing.JPanel jPanel20;
     private javax.swing.JPanel jPanel21;
+    private javax.swing.JPanel jPanel22;
+    private javax.swing.JPanel jPanel23;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
@@ -2537,20 +3121,5 @@ private void saveUsersToFile() {
     private javax.swing.JScrollBar jScrollBar1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTable jTable2;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField10;
-    private javax.swing.JTextField jTextField11;
-    private javax.swing.JTextField jTextField12;
-    private javax.swing.JTextField jTextField13;
-    private javax.swing.JTextField jTextField14;
-    private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
-    private javax.swing.JTextField jTextField5;
-    private javax.swing.JTextField jTextField6;
-    private javax.swing.JTextField jTextField7;
-    private javax.swing.JTextField jTextField8;
-    private javax.swing.JTextField jTextField9;
     // End of variables declaration//GEN-END:variables
 }
