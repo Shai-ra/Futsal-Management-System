@@ -1,3 +1,4 @@
-1,Shaira Gurung,18,13,Goalkeeper,islington
-5,Aarogay Thapa,19,6,Player,islington
-13,Dibika Dahal,21,13,player,islington
+1,Shaira Gurung,18,16,Goalkeeper,islington,1766368764472_DSCN0028.JPG
+5,Aarogay Thapa,19,6,Player,islington,1766378558848_DSCN0086.JPG
+13,Dibika Dahal,21,13,player,islington,
+15,boom,12,13,don,softwarica,

@@ -14,19 +14,26 @@ import java.text.SimpleDateFormat;
 import javax.swing.*;
 import Controller.*;
 import Model.*;
+import java.io.File;
+import javax.imageio.ImageIO;
 
 public class Admin extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Admin.class.getName());
     private UserController userController;
+    private TeamController teamController;
+    private PlayerController playerController;
+    private javax.swing.JLabel photoLabel;
 
     //Creates new form AdminLogin
-    public Admin() {
+public Admin() {
     initComponents();
     userController = new UserController();
     teamController = new TeamController();
     playerController = new PlayerController();
-    loadUsersFromFile();
+    
+    // Setup photo handling
+    setupPhotoHandling();
     
     // Load initial data to tables
     loadTeamData();
@@ -35,10 +42,14 @@ public class Admin extends javax.swing.JFrame {
     // Setup table selection listeners
     setupTableListeners();
     
+    // Setup photo column renderer and click listener
+    setupPhotoColumnRenderer();
+    setupPhotoClickListener();
+    
     // Add action listeners to buttons
     addActionListenersToTeamButtons();
     addActionListenersToPlayerButtons();
-    }
+}
     
   // In Admin.java (add these methods)
 
@@ -76,6 +87,103 @@ private String getDateFromChooser() {
 }
 
 
+
+private void setupUploadPhotoButton() {
+    UploadPhoto.addActionListener(new java.awt.event.ActionListener() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            uploadPhotoButtonClicked();
+        }
+    });
+}
+
+// In Admin.java - add this method
+private void setupPhotoHandling() {
+    // Create a photo label if not exists
+    photoLabel = new javax.swing.JLabel();
+    photoLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    photoLabel.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+    photoLabel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+    photoLabel.setPreferredSize(new java.awt.Dimension(150, 150));
+    
+    // Add photo label to the panel (adjust coordinates based on your layout)
+    jPanel9.add(photoLabel, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 470, 150, 150));
+    
+    // Modify UploadPhoto button action
+    UploadPhoto.addActionListener(new java.awt.event.ActionListener() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            handlePhotoUpload();
+        }
+    });
+}
+
+private void handlePhotoUpload() {
+    String photoPath = playerController.uploadPhoto();
+    
+    if (photoPath != null && !photoPath.isEmpty()) {
+        // Store the photo path temporarily (not in LinkedList yet)
+        UploadPhoto.putClientProperty("selectedPhoto", photoPath);
+        
+        // Display the photo preview
+        playerController.displayPhoto(photoPath, photoLabel);
+        
+        JOptionPane.showMessageDialog(this,
+            "Photo selected successfully!\n" +
+            "Click 'Add' or 'Update' to save with player.",
+            "Success", JOptionPane.INFORMATION_MESSAGE);
+    }
+}
+
+private void addActionListenerToUploadButton() {
+    UploadPhoto.addActionListener(new java.awt.event.ActionListener() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            uploadPhotoActionPerformed(evt);
+        }
+    });
+}
+
+private void uploadPhotoButtonClicked() {
+    String uploadedFileName = playerController.uploadPhoto();
+    
+    if (uploadedFileName != null && !uploadedFileName.isEmpty()) {
+        JOptionPane.showMessageDialog(this,
+            "Photo uploaded successfully!",
+            "Success", JOptionPane.INFORMATION_MESSAGE);
+        
+//        // Display the photo preview
+//        playerController.displayPhoto(uploadedFileName, photoPreviewLabel);
+        
+        // Store the filename
+        UploadPhoto.putClientProperty("lastUploadedPhoto", uploadedFileName);
+        
+        // Update label to show filename
+        jLabel34.setText("Photo: " + uploadedFileName);
+    }
+}
+
+private void uploadPhotoActionPerformed(java.awt.event.ActionEvent evt) {
+    // Call the controller's uploadPhoto method
+    String photoFileName = playerController.uploadPhoto();
+    
+    if (photoFileName != null) {
+        // Display the photo in the label
+        playerController.displayPhoto(photoFileName, photoLabel);
+        
+        // Show success message
+        JOptionPane.showMessageDialog(this, 
+            "Photo uploaded successfully!\n" + 
+            "File: " + photoFileName, 
+            "Success", JOptionPane.INFORMATION_MESSAGE);
+      
+        currentPhotoFileName = photoFileName;
+    }
+}
+
+// Add this class variable to store the current photo filename
+private String currentPhotoFileName = "";
+
 public void clearDateChooser() {
     DateOfBirth.setSelectedDate(null);
 }  
@@ -86,11 +194,11 @@ private void loadUsersFromFile() {
 //}
 
 private void loadTeamData() {
-    teamController.readTeams((javax.swing.table.DefaultTableModel) TeamTable.getModel());
+    teamController.loadTeamsToTable((javax.swing.table.DefaultTableModel) TeamTable.getModel());
 }
 
 private void loadPlayerData() {
-    playerController.readPlayers((javax.swing.table.DefaultTableModel) PlayerTable.getModel());
+    playerController.loadPlayersToTable((javax.swing.table.DefaultTableModel) PlayerTable.getModel());
 }
 
 private void clearTeamFields() {
@@ -107,6 +215,15 @@ private void clearPlayerFields() {
     PlayerJerseyNoTextField.setText("");
     PlayerPositionTextField.setText("");
     PMTeamNameTextField.setText("");
+    
+    // Clear photo display
+    if (photoLabel != null) {
+        photoLabel.setIcon(null);
+        photoLabel.setText("No Photo");
+    }
+    
+    // Clear stored photo selection
+    UploadPhoto.putClientProperty("selectedPhoto", null);
 }
 
 private void setupTableListeners() {
@@ -136,13 +253,131 @@ private void setupTableListeners() {
                     String playerId = PlayerTable.getValueAt(selectedRow, 0).toString();
                     playerController.loadPlayerFromTable(playerId, PlayerIDTextField, PlayerNameTextField,
                                                           PlayerAgeTextField, PlayerJerseyNoTextField,
-                                                          PlayerPositionTextField, PMTeamNameTextField);
+                                                          PlayerPositionTextField, PMTeamNameTextField, photoLabel);
+                currentPhotoFileName = PlayerTable.getValueAt(selectedRow, 6).toString();    
                 }
             }
         }
     };
     PlayerTable.getSelectionModel().addListSelectionListener(playerTableListener);
 }
+
+private void setupPhotoColumnRenderer() {
+    // Create a custom renderer for the Photo column (column 6)
+    PlayerTable.getColumnModel().getColumn(6).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+        @Override
+        public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            
+            // Call the parent method to get default styling
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            
+            // Set text to "View Photo" if photo exists, otherwise "No Photo"
+            if (value != null && !value.toString().isEmpty()) {
+                setText("View Photo");
+                setForeground(java.awt.Color.BLUE);
+                setToolTipText("Click to view photo");
+            } else {
+                setText("No Photo");
+                setForeground(java.awt.Color.GRAY);
+                setToolTipText("No photo available");
+            }
+            
+            // Center the text
+            setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+            
+            return this;
+        }
+    });
+}
+
+private void setupPhotoClickListener() {
+    PlayerTable.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent evt) {
+            int row = PlayerTable.rowAtPoint(evt.getPoint());
+            int col = PlayerTable.columnAtPoint(evt.getPoint());
+            
+            // Check if clicked on the Photo column (column 6)
+            if (row >= 0 && col == 6) {
+                String playerId = PlayerTable.getValueAt(row, 0).toString();
+                showPlayerPhoto(playerId);
+            }
+        }
+    });
+}
+private void showPlayerPhoto(String playerId) {
+    // Find the player
+    for (Player player : playerController.getPlayers()) {
+        if (player.getPlayerId().equals(playerId)) {
+            String photoFileName = player.getPhotoPath();
+            
+            if (photoFileName != null && !photoFileName.isEmpty()) {
+                File photoFile = new File("player_photos/" + photoFileName);
+                
+                if (photoFile.exists()) {
+                    try {
+                        // Create a dialog to show the photo
+                        javax.swing.JDialog photoDialog = new javax.swing.JDialog(this, 
+                            "Photo: " + player.getPlayerName(), true);
+                        photoDialog.setLayout(new java.awt.BorderLayout());
+                        
+                        // Create a label to display the photo
+                        javax.swing.JLabel photoLabel = new javax.swing.JLabel();
+                        photoLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                        
+                        // Load and scale the image
+                        java.awt.Image originalImage = javax.imageio.ImageIO.read(photoFile);
+                        java.awt.Image scaledImage = originalImage.getScaledInstance(
+                            400, 400, java.awt.Image.SCALE_SMOOTH);
+                        photoLabel.setIcon(new javax.swing.ImageIcon(scaledImage));
+                        
+                        // Add player info
+                        javax.swing.JLabel infoLabel = new javax.swing.JLabel(
+                            "<html><center><b>" + player.getPlayerName() + "</b><br>" +
+                            "Team: " + player.getTeamName() + "<br>" +
+                            "Position: " + player.getPosition() + "<br>" +
+                            "Jersey: #" + player.getJerseyNo() + "</center></html>");
+                        infoLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                        infoLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+                        
+                        // Add close button
+                        javax.swing.JButton closeButton = new javax.swing.JButton("Close");
+                        closeButton.addActionListener(e -> photoDialog.dispose());
+                        
+                        javax.swing.JPanel buttonPanel = new javax.swing.JPanel();
+                        buttonPanel.add(closeButton);
+                        
+                        // Add components
+                        photoDialog.add(infoLabel, java.awt.BorderLayout.NORTH);
+                        photoDialog.add(new javax.swing.JScrollPane(photoLabel), java.awt.BorderLayout.CENTER);
+                        photoDialog.add(buttonPanel, java.awt.BorderLayout.SOUTH);
+                        
+                        // Set dialog size and show
+                        photoDialog.setSize(450, 550);
+                        photoDialog.setLocationRelativeTo(this);
+                        photoDialog.setVisible(true);
+                        
+                    } catch (Exception e) {
+                        javax.swing.JOptionPane.showMessageDialog(this, 
+                            "Error loading photo: " + e.getMessage(),
+                            "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    javax.swing.JOptionPane.showMessageDialog(this, 
+                        "Photo file not found!",
+                        "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "No photo available for this player",
+                    "Information", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            }
+            break;
+        }
+    }
+}
+
 
 private void addActionListenersToTeamButtons() {
     // Add Team Button
@@ -203,23 +438,31 @@ private void addActionListenersToTeamButtons() {
     });
 }
 
-private void addActionListenersToPlayerButtons() {
+    private void addActionListenersToPlayerButtons() {
     // Add Player Button
     PMAddBtn.addActionListener(new java.awt.event.ActionListener() {
         @Override
         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            // Get the selected photo path
+            String photoPath = (String) UploadPhoto.getClientProperty("selectedPhoto");
+            
             boolean success = playerController.addPlayer(
                 PlayerIDTextField.getText(),
                 PlayerNameTextField.getText(),
                 PlayerAgeTextField.getText(),
                 PlayerJerseyNoTextField.getText(),
                 PlayerPositionTextField.getText(),
-                PMTeamNameTextField.getText()
+                PMTeamNameTextField.getText(),
+                photoPath    // Pass the photo path separately
             );
             
             if (success) {
                 loadPlayerData();
                 clearPlayerFields();
+                // Clear the stored photo
+                UploadPhoto.putClientProperty("selectedPhoto", null);
+                photoLabel.setIcon(null);
+                photoLabel.setText("No Photo");
             }
         }
     });
@@ -228,18 +471,39 @@ private void addActionListenersToPlayerButtons() {
     PMUpdateBtn.addActionListener(new java.awt.event.ActionListener() {
         @Override
         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            // Get the newly selected photo path
+            String newPhotoPath = (String) UploadPhoto.getClientProperty("selectedPhoto");
+            String photoPath = newPhotoPath;
+            
+            // If no new photo was selected, keep the existing photo
+            if (photoPath == null || photoPath.isEmpty()) {
+                int selectedRow = PlayerTable.getSelectedRow();
+                if (selectedRow >= 0) {
+                    // Get existing photo path from the table
+                    Object photoValue = PlayerTable.getValueAt(selectedRow, 6);
+                    if (photoValue != null) {
+                        photoPath = photoValue.toString();
+                    }
+                }
+            }
+            
             boolean success = playerController.updatePlayer(
                 PlayerIDTextField.getText(),
                 PlayerNameTextField.getText(),
                 PlayerAgeTextField.getText(),
                 PlayerJerseyNoTextField.getText(),
                 PlayerPositionTextField.getText(),
-                PMTeamNameTextField.getText()
+                PMTeamNameTextField.getText(),
+                photoPath
             );
             
             if (success) {
                 loadPlayerData();
                 clearPlayerFields();
+                // Clear the stored photo
+                UploadPhoto.putClientProperty("selectedPhoto", null);
+                photoLabel.setIcon(null);
+                photoLabel.setText("No Photo");
             }
         }
     });
@@ -253,6 +517,10 @@ private void addActionListenersToPlayerButtons() {
             if (success) {
                 loadPlayerData();
                 clearPlayerFields();
+                // Clear the stored photo
+                UploadPhoto.putClientProperty("selectedPhoto", null);
+                photoLabel.setIcon(null);
+                photoLabel.setText("No Photo");
             }
         }
     });
@@ -264,7 +532,7 @@ private void addActionListenersToPlayerButtons() {
             loadPlayerData();
         }
     });
-}            
+} 
 
 
     /**
@@ -319,6 +587,9 @@ private void addActionListenersToPlayerButtons() {
         jLabel6 = new javax.swing.JLabel();
         ProfileBtn = new javax.swing.JLabel();
         jLabel17 = new javax.swing.JLabel();
+        jLabel35 = new javax.swing.JLabel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        RecentActivitesTextArea = new javax.swing.JTextArea();
         TeamManagement = new javax.swing.JPanel();
         Nav2 = new javax.swing.JPanel();
         jPanel19 = new javax.swing.JPanel();
@@ -351,6 +622,9 @@ private void addActionListenersToPlayerButtons() {
         TMReadBtn = new javax.swing.JButton();
         TMSortByComboBox = new javax.swing.JComboBox<>();
         TMSearchComboBox = new javax.swing.JComboBox<>();
+        jLabel32 = new javax.swing.JLabel();
+        jLabel30 = new javax.swing.JLabel();
+        TMSearchBtn = new javax.swing.JLabel();
         PlayerManagement = new javax.swing.JPanel();
         Nav3 = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
@@ -388,6 +662,11 @@ private void addActionListenersToPlayerButtons() {
         PMDeleteBtn = new javax.swing.JButton();
         PMReadBtn = new javax.swing.JButton();
         PMSearchComboBox = new javax.swing.JComboBox<>();
+        PMSearchBtn = new javax.swing.JLabel();
+        jLabel31 = new javax.swing.JLabel();
+        UploadPhoto = new javax.swing.JButton();
+        jLabel34 = new javax.swing.JLabel();
+        jLabel33 = new javax.swing.JLabel();
         BookingManagement = new javax.swing.JPanel();
         Nav4 = new javax.swing.JPanel();
         jPanel20 = new javax.swing.JPanel();
@@ -412,6 +691,7 @@ private void addActionListenersToPlayerButtons() {
         AnnouncementBtn5 = new javax.swing.JLabel();
         Main5 = new javax.swing.JPanel();
         jPanel14 = new javax.swing.JPanel();
+        dateChooserPanel1 = new datechooser.beans.DateChooserPanel();
         AnnouncementManagement = new javax.swing.JPanel();
         Nav6 = new javax.swing.JPanel();
         jPanel11 = new javax.swing.JPanel();
@@ -903,6 +1183,17 @@ private void addActionListenersToPlayerButtons() {
     jLabel17.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/DashBoardBg.jpg"))); // NOI18N
     jPanel6.add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(-10, 0, 1080, 180));
 
+    jLabel35.setFont(new java.awt.Font("Serif", 1, 24)); // NOI18N
+    jLabel35.setForeground(new java.awt.Color(102, 102, 102));
+    jLabel35.setText("Recent Activities");
+    jPanel6.add(jLabel35, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 200, -1, -1));
+
+    RecentActivitesTextArea.setColumns(20);
+    RecentActivitesTextArea.setRows(5);
+    jScrollPane3.setViewportView(RecentActivitesTextArea);
+
+    jPanel6.add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 240, 330, 170));
+
     Main1.add(jPanel6, "card2");
 
     AdminDashboard.add(Main1, new org.netbeans.lib.awtextra.AbsoluteConstraints(240, 0, 1070, 720));
@@ -1095,21 +1386,28 @@ private void addActionListenersToPlayerButtons() {
 
     Main2.setLayout(new java.awt.CardLayout());
 
+    jPanel10.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
     jLabel1.setFont(new java.awt.Font("Serif", 0, 50)); // NOI18N
     jLabel1.setText("Team Management");
     jLabel1.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+    jPanel10.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 50, 417, 81));
 
-    jLabel7.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel7.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel7.setText("Team Name");
+    jPanel10.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 280, -1, -1));
 
-    jLabel8.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel8.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel8.setText("Team ID");
+    jPanel10.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 220, -1, -1));
 
-    jLabel9.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel9.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel9.setText("No. Player");
+    jPanel10.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 400, -1, -1));
 
-    jLabel10.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel10.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel10.setText("Manager");
+    jPanel10.add(jLabel10, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 340, -1, -1));
 
     TMTeamNameTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
     TMTeamNameTextField.addActionListener(new java.awt.event.ActionListener() {
@@ -1117,6 +1415,7 @@ private void addActionListenersToPlayerButtons() {
             TMTeamNameTextFieldActionPerformed(evt);
         }
     });
+    jPanel10.add(TMTeamNameTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 270, 252, 36));
 
     ManagerTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
     ManagerTextField.addActionListener(new java.awt.event.ActionListener() {
@@ -1124,13 +1423,17 @@ private void addActionListenersToPlayerButtons() {
             ManagerTextFieldActionPerformed(evt);
         }
     });
+    jPanel10.add(ManagerTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 330, 252, 36));
 
     TeamIDTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    jPanel10.add(TeamIDTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 210, 252, 36));
 
     NoPlayerTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    jPanel10.add(NoPlayerTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(190, 390, 252, 36));
 
-    jLabel11.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel11.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel11.setText("Search");
+    jPanel10.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 210, -1, 39));
 
     TMSearchTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
     TMSearchTextField.addActionListener(new java.awt.event.ActionListener() {
@@ -1138,9 +1441,11 @@ private void addActionListenersToPlayerButtons() {
             TMSearchTextFieldActionPerformed(evt);
         }
     });
+    jPanel10.add(TMSearchTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 210, 136, 39));
 
-    jLabel12.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel12.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel12.setText("Sort By");
+    jPanel10.add(jLabel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 270, -1, 39));
 
     TeamTable.setModel(new javax.swing.table.DefaultTableModel(
         new Object [][] {
@@ -1168,111 +1473,34 @@ private void addActionListenersToPlayerButtons() {
     ));
     jScrollPane1.setViewportView(TeamTable);
 
+    jPanel10.add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(550, 380, 420, 200));
+
     TMAddBtn.setText("Add");
+    jPanel10.add(TMAddBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 490, 127, 41));
 
     TMUpdateBtn.setText("Update");
+    jPanel10.add(TMUpdateBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 490, 127, 41));
 
     TMDeleteBtn.setText("Delete");
+    jPanel10.add(TMDeleteBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 560, 127, 41));
 
     TMReadBtn.setText("Read");
+    jPanel10.add(TMReadBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 560, 127, 41));
 
     TMSortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Team ID", "No. Player" }));
+    jPanel10.add(TMSortByComboBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 270, 100, 40));
 
     TMSearchComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Team ID", "Team Name", "Manager", "No. Player" }));
+    jPanel10.add(TMSearchComboBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 210, -1, 37));
 
-    javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
-    jPanel10.setLayout(jPanel10Layout);
-    jPanel10Layout.setHorizontalGroup(
-        jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGroup(jPanel10Layout.createSequentialGroup()
-            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel10Layout.createSequentialGroup()
-                    .addGap(103, 103, 103)
-                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addGroup(jPanel10Layout.createSequentialGroup()
-                            .addComponent(jLabel9)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(NoPlayerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
-                            .addComponent(jLabel10)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(ManagerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(jPanel10Layout.createSequentialGroup()
-                            .addComponent(jLabel8)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(TeamIDTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 417, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
-                            .addComponent(jLabel7)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 63, Short.MAX_VALUE)
-                            .addComponent(TMTeamNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGroup(jPanel10Layout.createSequentialGroup()
-                    .addGap(141, 141, 141)
-                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(TMDeleteBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(TMAddBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGap(90, 90, 90)
-                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(TMUpdateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(TMReadBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))))
-            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel10Layout.createSequentialGroup()
-                    .addGap(112, 112, 112)
-                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel11)
-                        .addComponent(jLabel12))
-                    .addGap(21, 21, 21)
-                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel10Layout.createSequentialGroup()
-                            .addComponent(TMSearchComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(TMSearchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addComponent(TMSortByComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addContainerGap(78, Short.MAX_VALUE))
-                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 420, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(31, 31, 31))))
-    );
-    jPanel10Layout.setVerticalGroup(
-        jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGroup(jPanel10Layout.createSequentialGroup()
-            .addGap(63, 63, 63)
-            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGap(60, 60, 60)
-            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(jLabel8)
-                .addComponent(TeamIDTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(TMSearchComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(TMSearchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGap(35, 35, 35)
-            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(jLabel7)
-                .addComponent(TMTeamNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(TMSortByComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGap(30, 30, 30)
-            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel10Layout.createSequentialGroup()
-                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel10)
-                        .addComponent(ManagerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGap(32, 32, 32)
-                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel9)
-                        .addComponent(NoPlayerTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGap(56, 56, 56)
-                    .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(TMAddBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(TMUpdateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGap(18, 18, 18)
-            .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(TMDeleteBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(TMReadBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addContainerGap(97, Short.MAX_VALUE))
-    );
+    jLabel32.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/search.png"))); // NOI18N
+    jPanel10.add(jLabel32, new org.netbeans.lib.awtextra.AbsoluteConstraints(900, 210, -1, -1));
+
+    jLabel30.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/bg2.png"))); // NOI18N
+    jPanel10.add(jLabel30, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 170, -1, -1));
+
+    TMSearchBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/bg2.png"))); // NOI18N
+    jPanel10.add(TMSearchBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 170, -1, -1));
 
     Main2.add(jPanel10, "card2");
 
@@ -1465,42 +1693,58 @@ private void addActionListenersToPlayerButtons() {
 
     Main3.setLayout(new java.awt.CardLayout());
 
+    jPanel9.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
     jLabel13.setFont(new java.awt.Font("Serif", 0, 50)); // NOI18N
     jLabel13.setText("Player Management");
     jLabel13.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+    jPanel9.add(jLabel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(50, 50, 417, 81));
 
-    jLabel14.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel14.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel14.setText("Player ID");
+    jPanel9.add(jLabel14, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 220, -1, -1));
 
     PlayerNameTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    jPanel9.add(PlayerNameTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 270, 252, 36));
 
-    jLabel15.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel15.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel15.setText("Team Name");
+    jPanel9.add(jLabel15, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 340, -1, -1));
 
     PlayerIDTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    jPanel9.add(PlayerIDTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 210, 252, 36));
 
-    jLabel16.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel16.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel16.setText("Age");
+    jPanel9.add(jLabel16, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 400, -1, -1));
 
     PlayerAgeTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    jPanel9.add(PlayerAgeTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 390, 86, 36));
 
-    jLabel18.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel18.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel18.setText("Jersey No");
+    jPanel9.add(jLabel18, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 460, -1, -1));
 
     PlayerJerseyNoTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    jPanel9.add(PlayerJerseyNoTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 450, 86, 36));
 
-    jLabel19.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel19.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel19.setText("Position");
+    jPanel9.add(jLabel19, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 510, -1, -1));
 
     PlayerPositionTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    jPanel9.add(PlayerPositionTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 500, 86, 36));
 
-    jLabel20.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel20.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel20.setText("Search");
+    jPanel9.add(jLabel20, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 220, -1, -1));
 
-    jLabel21.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jLabel21.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel21.setText("Sort By");
+    jPanel9.add(jLabel21, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 280, -1, -1));
 
     PMSearchTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    jPanel9.add(PMSearchTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 210, 151, 36));
 
     PMSortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Player ID", "Age", "Jersey" }));
     PMSortByComboBox.addActionListener(new java.awt.event.ActionListener() {
@@ -1508,29 +1752,31 @@ private void addActionListenersToPlayerButtons() {
             PMSortByComboBoxActionPerformed(evt);
         }
     });
+    jPanel9.add(PMSortByComboBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 270, 92, 40));
+    jPanel9.add(jScrollBar1, new org.netbeans.lib.awtextra.AbsoluteConstraints(1060, 0, -1, 714));
 
     PlayerTable.setModel(new javax.swing.table.DefaultTableModel(
         new Object [][] {
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null},
-            {null, null, null, null, null, null}
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null}
         },
         new String [] {
-            "Player ID", "Player Name", "Age", "Jersey", "Position", "Team"
+            "Player ID", "Player Name", "Age", "Jersey", "Position", "Team", "Photo"
         }
     ) {
         Class[] types = new Class [] {
-            java.lang.Integer.class, java.lang.String.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.String.class, java.lang.String.class
+            java.lang.Integer.class, java.lang.String.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class
         };
 
         public Class getColumnClass(int columnIndex) {
@@ -1539,12 +1785,17 @@ private void addActionListenersToPlayerButtons() {
     });
     jScrollPane2.setViewportView(PlayerTable);
 
-    jLabel22.setFont(new java.awt.Font("Sylfaen", 0, 24)); // NOI18N
+    jPanel9.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 370, 400, 240));
+
+    jLabel22.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel22.setText("Player Name");
+    jPanel9.add(jLabel22, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 280, -1, -1));
 
     PMTeamNameTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+    jPanel9.add(PMTeamNameTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 330, 252, 36));
 
     PMAddBtn.setText("Add");
+    jPanel9.add(PMAddBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 560, 127, 41));
 
     PMUpdateBtn.setText("Update");
     PMUpdateBtn.addActionListener(new java.awt.event.ActionListener() {
@@ -1552,10 +1803,13 @@ private void addActionListenersToPlayerButtons() {
             PMUpdateBtnActionPerformed(evt);
         }
     });
+    jPanel9.add(PMUpdateBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 560, 127, 41));
 
     PMDeleteBtn.setText("Delete");
+    jPanel9.add(PMDeleteBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 620, 127, 41));
 
     PMReadBtn.setText("Read");
+    jPanel9.add(PMReadBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 620, 127, 41));
 
     PMSearchComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Player ID", "Player Name", "Age", "Jersey", "Position", "Team" }));
     PMSearchComboBox.addActionListener(new java.awt.event.ActionListener() {
@@ -1563,127 +1817,27 @@ private void addActionListenersToPlayerButtons() {
             PMSearchComboBoxActionPerformed(evt);
         }
     });
+    jPanel9.add(PMSearchComboBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 210, 92, 39));
 
-    javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
-    jPanel9.setLayout(jPanel9Layout);
-    jPanel9Layout.setHorizontalGroup(
-        jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGroup(jPanel9Layout.createSequentialGroup()
-            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel9Layout.createSequentialGroup()
-                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addGroup(jPanel9Layout.createSequentialGroup()
-                            .addGap(118, 118, 118)
-                            .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 417, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(jPanel9Layout.createSequentialGroup()
-                            .addGap(104, 104, 104)
-                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(jPanel9Layout.createSequentialGroup()
-                                    .addComponent(jLabel14)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(PlayerIDTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(jPanel9Layout.createSequentialGroup()
-                                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel15)
-                                        .addComponent(jLabel16)
-                                        .addComponent(jLabel18)
-                                        .addComponent(jLabel19)
-                                        .addComponent(jLabel22))
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(PlayerNameTextField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(PlayerAgeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(PlayerJerseyNoTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(PlayerPositionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(PMTeamNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))))))
-                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel9Layout.createSequentialGroup()
-                            .addGap(91, 91, 91)
-                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(jPanel9Layout.createSequentialGroup()
-                                    .addComponent(jLabel21)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(PMSortByComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGroup(jPanel9Layout.createSequentialGroup()
-                                    .addComponent(jLabel20)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(PMSearchComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(16, 16, 16)
-                                    .addComponent(PMSearchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 151, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel9Layout.createSequentialGroup()
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))))
-                .addGroup(jPanel9Layout.createSequentialGroup()
-                    .addGap(159, 159, 159)
-                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addGroup(jPanel9Layout.createSequentialGroup()
-                            .addComponent(PMDeleteBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(PMReadBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(jPanel9Layout.createSequentialGroup()
-                            .addComponent(PMAddBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGap(72, 72, 72)
-                            .addComponent(PMUpdateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-            .addComponent(jScrollBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-    );
-    jPanel9Layout.setVerticalGroup(
-        jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGroup(jPanel9Layout.createSequentialGroup()
-            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel9Layout.createSequentialGroup()
-                    .addGap(68, 68, 68)
-                    .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(56, 56, 56)
-                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel14)
-                        .addComponent(PlayerIDTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel20)
-                        .addComponent(PMSearchComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(PMSearchTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGap(18, 18, 18)
-                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel9Layout.createSequentialGroup()
-                            .addGap(0, 19, Short.MAX_VALUE)
-                            .addComponent(jLabel22))
-                        .addComponent(PMSortByComboBox, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
-                        .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(PlayerNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel21)))
-                    .addGap(18, 18, 18)
-                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel9Layout.createSequentialGroup()
-                            .addGap(7, 7, 7)
-                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jLabel15)
-                                .addComponent(PMTeamNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGap(18, 18, 18)
-                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jLabel16)
-                                .addComponent(PlayerAgeTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGap(18, 18, 18)
-                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jLabel18)
-                                .addComponent(PlayerJerseyNoTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGap(18, 18, 18)
-                            .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jLabel19)
-                                .addComponent(PlayerPositionTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGap(18, 18, 18)
-                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(PMUpdateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(PMAddBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(PMDeleteBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(PMReadBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGap(53, 53, 53))
-                .addComponent(jScrollBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addContainerGap())
-    );
+    PMSearchBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/search.png"))); // NOI18N
+    jPanel9.add(PMSearchBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 210, -1, -1));
+
+    jLabel31.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/bg1.png"))); // NOI18N
+    jPanel9.add(jLabel31, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 170, -1, -1));
+
+    UploadPhoto.setText("Upload");
+    UploadPhoto.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            UploadPhotoActionPerformed(evt);
+        }
+    });
+    jPanel9.add(UploadPhoto, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 500, -1, -1));
+
+    jLabel34.setText("Photo");
+    jPanel9.add(jLabel34, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 470, -1, -1));
+
+    jLabel33.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/bg1.png"))); // NOI18N
+    jPanel9.add(jLabel33, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 170, -1, -1));
 
     Main3.add(jPanel9, "card2");
 
@@ -2078,16 +2232,61 @@ private void addActionListenersToPlayerButtons() {
 
     Main5.setLayout(new java.awt.CardLayout());
 
-    javax.swing.GroupLayout jPanel14Layout = new javax.swing.GroupLayout(jPanel14);
-    jPanel14.setLayout(jPanel14Layout);
-    jPanel14Layout.setHorizontalGroup(
-        jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGap(0, 1070, Short.MAX_VALUE)
-    );
-    jPanel14Layout.setVerticalGroup(
-        jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-        .addGap(0, 720, Short.MAX_VALUE)
-    );
+    jPanel14.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+    dateChooserPanel1.setCurrentView(new datechooser.view.appearance.AppearancesList("Grey",
+        new datechooser.view.appearance.ViewAppearance("custom",
+            new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                new java.awt.Color(0, 0, 0),
+                new java.awt.Color(0, 0, 255),
+                false,
+                true,
+                new datechooser.view.appearance.swing.ButtonPainter()),
+            new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                new java.awt.Color(0, 0, 0),
+                new java.awt.Color(0, 0, 255),
+                true,
+                true,
+                new datechooser.view.appearance.swing.ButtonPainter()),
+            new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                new java.awt.Color(0, 0, 255),
+                new java.awt.Color(0, 0, 255),
+                false,
+                true,
+                new datechooser.view.appearance.swing.ButtonPainter()),
+            new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                new java.awt.Color(128, 128, 128),
+                new java.awt.Color(0, 0, 255),
+                false,
+                true,
+                new datechooser.view.appearance.swing.LabelPainter()),
+            new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                new java.awt.Color(0, 0, 0),
+                new java.awt.Color(0, 0, 255),
+                false,
+                true,
+                new datechooser.view.appearance.swing.LabelPainter()),
+            new datechooser.view.appearance.swing.SwingCellAppearance(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12),
+                new java.awt.Color(0, 0, 0),
+                new java.awt.Color(255, 0, 0),
+                false,
+                false,
+                new datechooser.view.appearance.swing.ButtonPainter()),
+            (datechooser.view.BackRenderer)null,
+            false,
+            true)));
+dateChooserPanel1.setCalendarBackground(new java.awt.Color(0, 0, 0));
+dateChooserPanel1.addSelectionChangedListener(new datechooser.events.SelectionChangedListener() {
+    public void onSelectionChange(datechooser.events.SelectionChangedEvent evt) {
+        dateChooserPanel1OnSelectionChange(evt);
+    }
+    });
+    dateChooserPanel1.addCommitListener(new datechooser.events.CommitListener() {
+        public void onCommit(datechooser.events.CommitEvent evt) {
+            dateChooserPanel1OnCommit(evt);
+        }
+    });
+    jPanel14.add(dateChooserPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(526, 128, 468, 493));
 
     Main5.add(jPanel14, "card2");
 
@@ -2919,6 +3118,19 @@ private void addActionListenersToPlayerButtons() {
         // TODO add your handling code here:
     }//GEN-LAST:event_PMSearchComboBoxActionPerformed
 
+    private void dateChooserPanel1OnCommit(datechooser.events.CommitEvent evt) {//GEN-FIRST:event_dateChooserPanel1OnCommit
+        // TODO add your handling code here:
+    }//GEN-LAST:event_dateChooserPanel1OnCommit
+
+    private void dateChooserPanel1OnSelectionChange(datechooser.events.SelectionChangedEvent evt) {//GEN-FIRST:event_dateChooserPanel1OnSelectionChange
+                    // TODO add your handling code here:
+                    
+    }//GEN-LAST:event_dateChooserPanel1OnSelectionChange
+
+    private void UploadPhotoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UploadPhotoActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_UploadPhotoActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2944,8 +3156,7 @@ private void addActionListenersToPlayerButtons() {
         java.awt.EventQueue.invokeLater(() -> new Admin().setVisible(true));
            
     }
-final TeamController teamController;
-final PlayerController playerController;
+
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel AdminDashboard;
@@ -3023,6 +3234,7 @@ final PlayerController playerController;
     private javax.swing.JButton PMAddBtn;
     private javax.swing.JButton PMDeleteBtn;
     private javax.swing.JButton PMReadBtn;
+    private javax.swing.JLabel PMSearchBtn;
     private javax.swing.JComboBox<String> PMSearchComboBox;
     private javax.swing.JTextField PMSearchTextField;
     private javax.swing.JComboBox<String> PMSortByComboBox;
@@ -3037,6 +3249,7 @@ final PlayerController playerController;
     private javax.swing.JTable PlayerTable;
     private javax.swing.JLabel ProfileBtn;
     private javax.swing.JPanel ProfileSettings;
+    private javax.swing.JTextArea RecentActivitesTextArea;
     private javax.swing.JLabel ScheduleBtn1;
     private javax.swing.JLabel ScheduleBtn2;
     private javax.swing.JLabel ScheduleBtn3;
@@ -3056,6 +3269,7 @@ final PlayerController playerController;
     private javax.swing.JButton TMAddBtn;
     private javax.swing.JButton TMDeleteBtn;
     private javax.swing.JButton TMReadBtn;
+    private javax.swing.JLabel TMSearchBtn;
     private javax.swing.JComboBox<String> TMSearchComboBox;
     private javax.swing.JTextField TMSearchTextField;
     private javax.swing.JComboBox<String> TMSortByComboBox;
@@ -3072,6 +3286,8 @@ final PlayerController playerController;
     private javax.swing.JLabel Title6;
     private javax.swing.JLabel Title7;
     private javax.swing.JLabel Title8;
+    private javax.swing.JButton UploadPhoto;
+    private datechooser.beans.DateChooserPanel dateChooserPanel1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -3095,6 +3311,12 @@ final PlayerController playerController;
     private javax.swing.JLabel jLabel28;
     private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel30;
+    private javax.swing.JLabel jLabel31;
+    private javax.swing.JLabel jLabel32;
+    private javax.swing.JLabel jLabel33;
+    private javax.swing.JLabel jLabel34;
+    private javax.swing.JLabel jLabel35;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -3121,5 +3343,6 @@ final PlayerController playerController;
     private javax.swing.JScrollBar jScrollBar1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     // End of variables declaration//GEN-END:variables
 }

@@ -1,30 +1,27 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Controller;
 
-/**
- *
- * @author WELCOME
- */
 import Model.Team;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import java.io.*;
+import java.util.LinkedList;
 
 public class TeamController {
-    private static final String TEAM_DATA_FILE = "teams.txt";
-    private List<Team> teams;
+    private LinkedList<Team> teams = new LinkedList<>();
     
     public TeamController() {
-        teams = new ArrayList<>();
-        loadTeamsFromFile();
+        teams = new LinkedList<>();
+        prepareInitialTeamData();
     }
     
-    // CRUD Operations
+    // Add initial sample data (like in MainScreen)
+    private void prepareInitialTeamData() {
+        teams.add(new Team("T001", "Manchester City", "Pep Guardiola", 25));
+        teams.add(new Team("T002", "Real Madrid", "Carlo Ancelotti", 24));
+        teams.add(new Team("T003", "FC Barcelona", "Xavi Hernandez", 23));
+        teams.add(new Team("T004", "Bayern Munich", "Thomas Tuchel", 22));
+    }
+    
+    // CRUD Operations using LinkedList (similar to MainScreen pattern)
     public boolean addTeam(String teamId, String teamName, String manager, String noOfPlayers) {
         // Validation
         if (teamId.isEmpty() || teamName.isEmpty() || manager.isEmpty() || noOfPlayers.isEmpty()) {
@@ -32,7 +29,7 @@ public class TeamController {
             return false;
         }
         
-        // Check if team ID already exists
+        // Check if team ID already exists using LinkedList iteration
         for (Team team : teams) {
             if (team.getTeamId().equals(teamId)) {
                 JOptionPane.showMessageDialog(null, "Team ID already exists!", "Error", JOptionPane.ERROR_MESSAGE);
@@ -48,10 +45,9 @@ public class TeamController {
                 return false;
             }
             
-            // Create new team
+            // Create new team and add to LinkedList
             Team newTeam = new Team(teamId, teamName, manager, playerCount);
-            teams.add(newTeam);
-            saveTeamsToFile();
+            teams.add(newTeam); // Adds to the end of LinkedList
             
             JOptionPane.showMessageDialog(null, "Team added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             return true;
@@ -76,12 +72,12 @@ public class TeamController {
                 return false;
             }
             
-            // Find and update team
+            // Find and update team in LinkedList
             for (int i = 0; i < teams.size(); i++) {
-                if (teams.get(i).getTeamId().equals(teamId)) {
+                Team team = teams.get(i);
+                if (team.getTeamId().equals(teamId)) {
                     Team updatedTeam = new Team(teamId, teamName, manager, playerCount);
-                    teams.set(i, updatedTeam);
-                    saveTeamsToFile();
+                    teams.set(i, updatedTeam); // Update at specific index
                     
                     JOptionPane.showMessageDialog(null, "Team updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                     return true;
@@ -103,12 +99,10 @@ public class TeamController {
             return false;
         }
         
-        // Find and remove team
+        // Find and remove team from LinkedList
         for (int i = 0; i < teams.size(); i++) {
             if (teams.get(i).getTeamId().equals(teamId)) {
-                teams.remove(i);
-                saveTeamsToFile();
-                
+                teams.remove(i); // Remove from specific index
                 JOptionPane.showMessageDialog(null, "Team deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 return true;
             }
@@ -118,94 +112,95 @@ public class TeamController {
         return false;
     }
     
-    public void readTeams(DefaultTableModel tableModel) {
-        // Clear existing rows
-        tableModel.setRowCount(0);
+    // Load teams to table (like loadStudentListToTable in MainScreen)
+    public void loadTeamsToTable(DefaultTableModel tableModel) {
+        tableModel.setRowCount(0); // Clear existing rows
         
-        // Add all teams to table
         for (Team team : teams) {
-            Object[] rowData = {
+            Object[] row = {
                 team.getTeamId(),
                 team.getTeamName(),
                 team.getManager(),
                 team.getNoOfPlayers()
             };
-            tableModel.addRow(rowData);
+            tableModel.addRow(row);
         }
     }
     
-    // Load team data from table selection
-    public void loadTeamFromTable(String teamId, javax.swing.JTextField teamIdField, 
-                                   javax.swing.JTextField teamNameField, 
-                                   javax.swing.JTextField managerField, 
-                                   javax.swing.JTextField noPlayersField) {
-        if (teamId.isEmpty()) {
-            return;
-        }
-        
+    // Get team by ID using LinkedList iteration
+    public Team getTeamById(String teamId) {
         for (Team team : teams) {
             if (team.getTeamId().equals(teamId)) {
-                teamIdField.setText(team.getTeamId());
-                teamNameField.setText(team.getTeamName());
-                managerField.setText(team.getManager());
-                noPlayersField.setText(String.valueOf(team.getNoOfPlayers()));
-                break;
+                return team;
             }
         }
+        return null;
     }
     
-    // File Operations
-    private void loadTeamsFromFile() {
-        try {
-            File file = new File(TEAM_DATA_FILE);
-            if (!file.exists()) {
-                file.createNewFile();
-                return;
+    // Load team data from table selection (like MainScreen's loadStudentFromTable)
+public void loadTeamFromTable(String teamId, javax.swing.JTextField teamIdField,
+                              javax.swing.JTextField teamNameField,
+                              javax.swing.JTextField managerField,
+                              javax.swing.JTextField noPlayerField) {
+    if (teamId.isEmpty()) {
+        return;
+    }
+    
+    // Search in LinkedList
+    for (Team team : teams) {
+        if (team.getTeamId().equals(teamId)) {
+            teamIdField.setText(team.getTeamId());
+            teamNameField.setText(team.getTeamName());
+            managerField.setText(team.getManager());
+            noPlayerField.setText(String.valueOf(team.getNoOfPlayers()));
+            break;
+        }
+    }
+}
+    
+    // Search teams by name using LinkedList iteration
+    public LinkedList<Team> searchTeamsByName(String name) {
+        LinkedList<Team> results = new LinkedList<>();
+        for (Team team : teams) {
+            if (team.getTeamName().toLowerCase().contains(name.toLowerCase())) {
+                results.add(team);
             }
-            
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length >= 4) {
-                    try {
-                        String teamId = parts[0];
-                        String teamName = parts[1];
-                        String manager = parts[2];
-                        int noOfPlayers = Integer.parseInt(parts[3]);
-                        
-                        Team team = new Team(teamId, teamName, manager, noOfPlayers);
-                        teams.add(team);
-                    } catch (NumberFormatException e) {
-                        System.err.println("Invalid data format in teams file: " + line);
-                    }
+        }
+        return results;
+    }
+    
+    // Sort teams by number of players (bubble sort implementation for LinkedList)
+    public void sortTeamsByPlayerCount() {
+        int n = teams.size();
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (teams.get(j).getNoOfPlayers() > teams.get(j + 1).getNoOfPlayers()) {
+                    // Swap teams
+                    Team temp = teams.get(j);
+                    teams.set(j, teams.get(j + 1));
+                    teams.set(j + 1, temp);
                 }
             }
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
     
-    private void saveTeamsToFile() {
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(TEAM_DATA_FILE));
-            for (Team team : teams) {
-                String line = team.getTeamId() + "," + 
-                             team.getTeamName() + "," + 
-                             team.getManager() + "," + 
-                             team.getNoOfPlayers();
-                writer.write(line);
-                writer.newLine();
-            }
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    // Getter for teams list
-    public List<Team> getTeams() {
+    // Getter for teams LinkedList
+    public LinkedList<Team> getTeams() {
         return teams;
+    }
+    
+    // Get team count
+    public int getTeamCount() {
+        return teams.size();
+    }
+    
+    // Check if team exists by ID
+    public boolean teamExists(String teamId) {
+        for (Team team : teams) {
+            if (team.getTeamId().equals(teamId)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

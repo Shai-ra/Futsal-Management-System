@@ -1,13 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Model;
 
-/**
- *
- * @author WELCOME
- */
 public class Player {
     private String playerId;
     private String playerName;
@@ -15,14 +7,17 @@ public class Player {
     private int jerseyNo;
     private String position;
     private String teamName;
+    private String photoPath; // Will be set separately
     
-    public Player(String playerId, String playerName, int age, int jerseyNo, String position, String teamName) {
+    public Player(String playerId, String playerName, int age, int jerseyNo, 
+                  String position, String teamName) {
         this.playerId = playerId;
         this.playerName = playerName;
         this.age = age;
         this.jerseyNo = jerseyNo;
         this.position = position;
         this.teamName = teamName;
+        this.photoPath = ""; // Initialize as empty
     }
     
     // Getters and Setters
@@ -43,4 +38,7 @@ public class Player {
     
     public String getTeamName() { return teamName; }
     public void setTeamName(String teamName) { this.teamName = teamName; }
+    
+    public String getPhotoPath() { return photoPath; }
+    public void setPhotoPath(String photoPath) { this.photoPath = photoPath; }
 }

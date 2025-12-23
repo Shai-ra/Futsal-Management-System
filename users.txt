@@ -1,2 +1,4 @@
 Aarogay.admin,12345,Aarogay,Thapa,14-12-2025
+Kabil.admin,54321,Kabil,Shrestha,24-04-2006
 honey.admin,54321,Shaira,Gurung,25-12-2006
+Ruzil.admin,54321,Rujal,Shrestha,12-12-2006
