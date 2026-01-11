@@ -1,0 +1,9 @@
+Aarogay.admin,12345,Aarogay,Thapa,14-12-2025
+Kabil.admin,54321,Kabil,Shrestha,24-04-2006
+honey.admin,54321,Shaira,Gurung,25-12-2006
+Ruzil.admin,54321,Rujal,Shrestha,12-12-2006
+Aarogya.admin,54321,Aarogya,Thapa,08-12-2015
+home,54321,Shaira,Gurung,04-01-2026
+ho,09876,home,grp,04-01-2026
+uh,54321,shaira,gurung,09-01-2026
+yh,54321,shaira,Guring,09-01-2026
