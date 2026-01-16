@@ -4,6 +4,8 @@
  */
 package View;
 
+import datechooser.beans.DateChooserCombo;
+
 /**
  *
  * @author WELCOME
@@ -24,51 +26,31 @@ import java.util.Calendar;
 public class Admin extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Admin.class.getName());
-    private UserController userController;
-    private TeamController teamController;
-    private PlayerController playerController;
-    private BookingController bookingController;
+    private AdminController adminController;
     private boolean isAdmin = false;
     private javax.swing.JLabel photoLabel;
-    private String lastModifiedBookingId = null;
-
-    // Creates new form AdminLogin
+ 
     public Admin() {
         initComponents();
-        userController = new UserController();
-        teamController = new TeamController();
-        playerController = new PlayerController();
-        bookingController = new BookingController();
+        adminController = new AdminController(this);
 
-        // Setup photo handling
-        setupPhotoHandling();
-
-        // Load initial data to tables
-        loadTeamData();
-        loadPlayerData();
-
-        // Setup table selection listeners
-        setupTableListeners();
-
-        // Setup photo column renderer and click listener
+        // Setup UI components (strictly View logic)
+        setupPhotoLabel(); // Renamed from setupPhotoHandling to avoid confusion
+        setupBookingTableUI(); // Renamed from setupBookingTableActions
         setupPhotoColumnRenderer();
         setupPhotoClickListener();
-
-        // Add action listeners to buttons
-        addActionListenersToTeamButtons();
-        addActionListenersToPlayerButtons();
-
-        // Load initial data for bookings
-        setupBookingTableActions();
-        loadBookingData();
-        highlightBookedDates();
-
-        // Dashboard fixes
-        RecentActivitesTextArea.setEditable(false);
-        updateDashboardStats();
-        updateUpcomingMatch();
-        setupSearchSortUndoListeners();
         setupAnnouncementListeners();
+
+        // Initialize Controller
+        adminController.initController();
+
+        RecentActivitesTextArea.setEditable(false);
+    }
+
+    public void addRecentActivity(String log) {
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        String time = sdf.format(new java.util.Date());
+        RecentActivitesTextArea.append("[" + time + "] " + log + "\n");
     }
 
     // In Admin.java (add these methods)
@@ -79,10 +61,6 @@ public class Admin extends javax.swing.JFrame {
 
     public JPasswordField getLoginPasswordField() {
         return LoginPassword;
-    }
-
-    public JToggleButton getLoginBtn() {
-        return LoginBtn;
     }
 
     public JTextField getSignUpUsernameField() {
@@ -105,20 +83,20 @@ public class Admin extends javax.swing.JFrame {
         return SignUpLastName;
     }
 
-    public JToggleButton getSignUpBtn() {
-        return SignUpBtn;
-    }
-
     public JLabel getLoginSignUpLabel() {
         return LoginSignUp;
     }
 
-    public JPanel getMainPanel() {
-        return jPanel1;
+    public JTextArea getRecentActivitesTextArea() {
+        return RecentActivitesTextArea;
     }
 
     public void setWelcomeMessage(String firstName) {
         jLabel6.setText("Welcome Back " + firstName + "!");
+    }
+
+    public void setIsAdmin(boolean isAdmin) {
+        this.isAdmin = isAdmin;
     }
 
     private void handleNavigation(String cardName) {
@@ -136,13 +114,9 @@ public class Admin extends javax.swing.JFrame {
         cardLayout.show(jPanel1, cardName);
     }
 
-    private void setupBookingTableActions() {
+    private void setupBookingTableUI() {
         // Add a column for actions if not already present
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) BookingTable.getModel();
-        model.setColumnIdentifiers(new String[] {
-                "Name", "Username", "Booking ID", "Date", "Time", "Ground no", "Team 1", "Team 2",
-                "Payment Status", "Action"
-        });
 
         // Action column is at index 9
         BookingTable.getColumnModel().getColumn(9).setCellRenderer(new javax.swing.table.TableCellRenderer() {
@@ -168,140 +142,8 @@ public class Admin extends javax.swing.JFrame {
             }
         });
 
-        BookingTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                int column = BookingTable.getColumnModel().getColumnIndexAtX(e.getX());
-                int row = e.getY() / BookingTable.getRowHeight();
-
-                if (row < BookingTable.getRowCount() && row >= 0 && column == 9) {
-                    java.awt.Rectangle rect = BookingTable.getCellRect(row, column, true);
-                    int xRel = e.getX() - rect.x;
-
-                    String bookingId = BookingTable.getValueAt(row, 2).toString(); // Booking ID is at index 2
-
-                    if (xRel < rect.width / 2) {
-                        // Accept clicked
-                        handleAcceptBooking(bookingId);
-                    } else {
-                        // Decline clicked
-                        handleDeclineBooking(bookingId);
-                    }
-                }
-            }
-        });
-
         // Increase row height to accommodate stacked buttons
         BookingTable.setRowHeight(60);
-    }
-
-    private void handleAcceptBooking(String bookingId) {
-        Booking b = bookingController.getBookingById(bookingId);
-        if (bookingController.updateBookingStatus(bookingId, "ACCEPTED", "")) {
-            JOptionPane.showMessageDialog(this, "Booking Accepted!");
-            if (b != null) {
-                RecentActivitesTextArea.append("Team " + b.getTeamName() + " accepted\n");
-            }
-            lastModifiedBookingId = bookingId;
-            loadBookingData();
-            highlightBookedDates();
-            updateDashboardStats();
-            updateUpcomingMatch();
-        }
-    }
-
-    private void handleDeclineBooking(String bookingId) {
-        Booking b = bookingController.getBookingById(bookingId);
-        String reason = JOptionPane.showInputDialog(this, "Enter reason for declining:");
-        if (reason != null && !reason.trim().isEmpty()) {
-            if (bookingController.updateBookingStatus(bookingId, "DECLINED", reason)) {
-                JOptionPane.showMessageDialog(this, "Booking Declined.");
-                if (b != null) {
-                    RecentActivitesTextArea.append("Team " + b.getTeamName() + " declined\n");
-                }
-                lastModifiedBookingId = bookingId;
-                loadBookingData();
-                highlightBookedDates();
-                updateDashboardStats();
-                updateUpcomingMatch();
-            }
-        }
-    }
-
-    private void setupSearchSortUndoListeners() {
-        // Team Search (jLabel32 is the actual search icon for Teams)
-        jLabel32.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                handleTeamSearch();
-            }
-
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                jLabel32.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-            }
-        });
-
-        // Player Search
-        PMSearchBtn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                handlePlayerSearch();
-            }
-
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                PMSearchBtn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-            }
-        });
-
-        // Team Sort
-        TMSortByComboBox.addActionListener(e -> handleTeamSort());
-
-        // Player Sort
-        PMSortByComboBox.addActionListener(e -> handlePlayerSort());
-
-        // Undo
-        jButton1.addActionListener(e -> handleUndo());
-    }
-
-    private void handleTeamSearch() {
-        String criteria = (String) TMSearchComboBox.getSelectedItem();
-        String query = TMSearchTextField.getText();
-        teamController.searchTeams(criteria, query, (javax.swing.table.DefaultTableModel) TeamTable.getModel());
-    }
-
-    private void handlePlayerSearch() {
-        String criteria = (String) PMSearchComboBox.getSelectedItem();
-        String query = PMSearchTextField.getText();
-        playerController.searchPlayers(criteria, query, (javax.swing.table.DefaultTableModel) PlayerTable.getModel());
-    }
-
-    private void handleTeamSort() {
-        String criteria = (String) TMSortByComboBox.getSelectedItem();
-        teamController.sortTeams(criteria, (javax.swing.table.DefaultTableModel) TeamTable.getModel());
-    }
-
-    private void handlePlayerSort() {
-        String criteria = (String) PMSortByComboBox.getSelectedItem();
-        playerController.sortPlayers(criteria, (javax.swing.table.DefaultTableModel) PlayerTable.getModel());
-    }
-
-    private void handleUndo() {
-        if (lastModifiedBookingId == null) {
-            JOptionPane.showMessageDialog(this, "No action to undo!");
-            return;
-        }
-
-        if (bookingController.updateBookingStatus(lastModifiedBookingId, "PENDING", "")) {
-            JOptionPane.showMessageDialog(this, "Action undone! Booking is now PENDING.");
-            RecentActivitesTextArea.append("Undo last action for " + lastModifiedBookingId + "\n");
-            lastModifiedBookingId = null;
-            loadBookingData();
-            highlightBookedDates();
-            updateDashboardStats();
-            updateUpcomingMatch();
-        }
     }
 
     private void setupAnnouncementListeners() {
@@ -345,9 +187,9 @@ public class Admin extends javax.swing.JFrame {
         });
     }
 
-    private void highlightBookedDates() {
+    public void highlightBookedDates() {
         try {
-            LinkedList<Booking> allBookings = bookingController.getBookings();
+            LinkedList<Booking> allBookings = adminController.getBookingController().getBookings();
             PeriodSet periodSet = new PeriodSet();
 
             for (Booking booking : allBookings) {
@@ -367,31 +209,9 @@ public class Admin extends javax.swing.JFrame {
         }
     }
 
-    private void loadBookingData() {
-        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) BookingTable.getModel();
-        model.setRowCount(0);
-
-        for (Booking b : bookingController.getBookings()) {
-            if (b.getStatus().equals("PENDING")) {
-                model.addRow(new Object[] {
-                        b.getName(),
-                        b.getUsername(),
-                        b.getBookingId(),
-                        b.getDate(),
-                        b.getTime(),
-                        b.getGroundNo(),
-                        b.getTeam1(),
-                        b.getTeam2(),
-                        b.getPaymentStatus(),
-                        "" // Action column placeholder
-                });
-            }
-        }
-    }
-
     private int countPendingBookings() {
         int count = 0;
-        for (Booking b : bookingController.getBookings()) {
+        for (Booking b : adminController.getBookingController().getBookings()) {
             if ("PENDING".equals(b.getStatus())) {
                 count++;
             }
@@ -401,7 +221,7 @@ public class Admin extends javax.swing.JFrame {
 
     private int countAcceptedBookings() {
         int count = 0;
-        for (Booking b : bookingController.getBookings()) {
+        for (Booking b : adminController.getBookingController().getBookings()) {
             if ("ACCEPTED".equals(b.getStatus())) {
                 count++;
             }
@@ -409,23 +229,23 @@ public class Admin extends javax.swing.JFrame {
         return count;
     }
 
-    private void updateDashboardStats() {
+    public void updateDashboardStats() {
         if (jLabel47 != null)
-            jLabel47.setText(String.valueOf(teamController.getTeamCount())); // Total Teams
+            jLabel47.setText(String.valueOf(adminController.getTeamController().getTeamCount())); // Total Teams
         if (jLabel49 != null)
-            jLabel49.setText(String.valueOf(playerController.getPlayerCount())); // Total Players
+            jLabel49.setText(String.valueOf(adminController.getPlayerController().getPlayerCount())); // Total Players
         if (jLabel48 != null)
             jLabel48.setText(String.valueOf(countPendingBookings())); // Total Bookings (Pending)
         if (jLabel50 != null)
             jLabel50.setText(String.valueOf(countAcceptedBookings())); // Total Matches
     }
 
-    private void updateUpcomingMatch() {
+    public void updateUpcomingMatch() {
         LinkedList<Booking> accepted = new LinkedList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String todayStr = sdf.format(new java.util.Date());
 
-        for (Booking b : bookingController.getBookings()) {
+        for (Booking b : adminController.getBookingController().getBookings()) {
             if ("ACCEPTED".equals(b.getStatus())) {
                 if (b.getDate().compareTo(todayStr) >= 0) {
                     accepted.add(b);
@@ -469,17 +289,7 @@ public class Admin extends javax.swing.JFrame {
         return "";
     }
 
-    private void setupUploadPhotoButton() {
-        UploadPhoto.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                uploadPhotoButtonClicked();
-            }
-        });
-    }
-
-    // In Admin.java - add this method
-    private void setupPhotoHandling() {
+    private void setupPhotoLabel() {
         // Create a photo label if not exists
         photoLabel = new javax.swing.JLabel();
         photoLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -487,27 +297,19 @@ public class Admin extends javax.swing.JFrame {
         photoLabel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         photoLabel.setPreferredSize(new java.awt.Dimension(150, 150));
 
-        // Add photo label to the panel (adjust coordinates based on your layout)
+        // Add photo label to the panel
         jPanel9.add(photoLabel, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 470, 150, 150));
-
-        // Modify UploadPhoto button action
-        UploadPhoto.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                handlePhotoUpload();
-            }
-        });
     }
 
     private void handlePhotoUpload() {
-        String photoPath = playerController.uploadPhoto();
+        String photoPath = adminController.getPlayerController().uploadPhoto();
 
         if (photoPath != null && !photoPath.isEmpty()) {
             // Store the photo path temporarily (not in LinkedList yet)
             UploadPhoto.putClientProperty("selectedPhoto", photoPath);
 
             // Display the photo preview
-            playerController.displayPhoto(photoPath, photoLabel);
+            adminController.getPlayerController().displayPhoto(photoPath, photoLabel);
 
             JOptionPane.showMessageDialog(this,
                     "Photo selected successfully!\n" +
@@ -515,55 +317,6 @@ public class Admin extends javax.swing.JFrame {
                     "Success", JOptionPane.INFORMATION_MESSAGE);
         }
     }
-
-    private void addActionListenerToUploadButton() {
-        UploadPhoto.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                uploadPhotoActionPerformed(evt);
-            }
-        });
-    }
-
-    private void uploadPhotoButtonClicked() {
-        String uploadedFileName = playerController.uploadPhoto();
-
-        if (uploadedFileName != null && !uploadedFileName.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Photo uploaded successfully!",
-                    "Success", JOptionPane.INFORMATION_MESSAGE);
-
-            // // Display the photo preview
-            // playerController.displayPhoto(uploadedFileName, photoPreviewLabel);
-
-            // Store the filename
-            UploadPhoto.putClientProperty("lastUploadedPhoto", uploadedFileName);
-
-            // Update label to show filename
-            jLabel34.setText("Photo: " + uploadedFileName);
-        }
-    }
-
-    private void uploadPhotoActionPerformed(java.awt.event.ActionEvent evt) {
-        // Call the controller's uploadPhoto method
-        String photoFileName = playerController.uploadPhoto();
-
-        if (photoFileName != null) {
-            // Display the photo in the label
-            playerController.displayPhoto(photoFileName, photoLabel);
-
-            // Show success message
-            JOptionPane.showMessageDialog(this,
-                    "Photo uploaded successfully!\n" +
-                            "File: " + photoFileName,
-                    "Success", JOptionPane.INFORMATION_MESSAGE);
-
-            currentPhotoFileName = photoFileName;
-        }
-    }
-
-    // Add this class variable to store the current photo filename
-    private String currentPhotoFileName = "";
 
     public void clearDateChooser() {
         DateOfBirth.setSelectedDate(null);
@@ -575,22 +328,14 @@ public class Admin extends javax.swing.JFrame {
     // private void saveUsersToFile() {
     // }
 
-    private void loadTeamData() {
-        teamController.loadTeamsToTable((javax.swing.table.DefaultTableModel) TeamTable.getModel());
-    }
-
-    private void loadPlayerData() {
-        playerController.loadPlayersToTable((javax.swing.table.DefaultTableModel) PlayerTable.getModel());
-    }
-
-    private void clearTeamFields() {
+    public void clearTeamFields() {
         TeamIDTextField.setText("");
         TMTeamNameTextField.setText("");
         ManagerTextField.setText("");
         NoPlayerTextField.setText("");
     }
 
-    private void clearPlayerFields() {
+    public void clearPlayerFields() {
         PlayerIDTextField.setText("");
         PlayerNameTextField.setText("");
         PlayerAgeTextField.setText("");
@@ -606,42 +351,6 @@ public class Admin extends javax.swing.JFrame {
 
         // Clear stored photo selection
         UploadPhoto.putClientProperty("selectedPhoto", null);
-    }
-
-    private void setupTableListeners() {
-        // Team table selection listener
-        javax.swing.event.ListSelectionListener teamTableListener = new javax.swing.event.ListSelectionListener() {
-            @Override
-            public void valueChanged(javax.swing.event.ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    int selectedRow = TeamTable.getSelectedRow();
-                    if (selectedRow >= 0) {
-                        String teamId = TeamTable.getValueAt(selectedRow, 0).toString();
-                        teamController.loadTeamFromTable(teamId, TeamIDTextField, TMTeamNameTextField,
-                                ManagerTextField, NoPlayerTextField);
-                    }
-                }
-            }
-        };
-        TeamTable.getSelectionModel().addListSelectionListener(teamTableListener);
-
-        // Player table selection listener
-        javax.swing.event.ListSelectionListener playerTableListener = new javax.swing.event.ListSelectionListener() {
-            @Override
-            public void valueChanged(javax.swing.event.ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    int selectedRow = PlayerTable.getSelectedRow();
-                    if (selectedRow >= 0) {
-                        String playerId = PlayerTable.getValueAt(selectedRow, 0).toString();
-                        playerController.loadPlayerFromTable(playerId, PlayerIDTextField, PlayerNameTextField,
-                                PlayerAgeTextField, PlayerJerseyNoTextField,
-                                PlayerPositionTextField, PMTeamNameTextField, photoLabel);
-                        currentPhotoFileName = PlayerTable.getValueAt(selectedRow, 6).toString();
-                    }
-                }
-            }
-        };
-        PlayerTable.getSelectionModel().addListSelectionListener(playerTableListener);
     }
 
     private void setupPhotoColumnRenderer() {
@@ -691,7 +400,7 @@ public class Admin extends javax.swing.JFrame {
 
     private void showPlayerPhoto(String playerId) {
         // Find the player
-        for (Player player : playerController.getPlayers()) {
+        for (Player player : adminController.getPlayerController().getPlayers()) {
             if (player.getPlayerId().equals(playerId)) {
                 String photoFileName = player.getPhotoPath();
 
@@ -760,178 +469,38 @@ public class Admin extends javax.swing.JFrame {
             }
         }
     }
-
-    private void addActionListenersToTeamButtons() {
-        // Add Team Button
-        TMAddBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                boolean success = teamController.addTeam(
-                        TeamIDTextField.getText(),
-                        TMTeamNameTextField.getText(),
-                        ManagerTextField.getText(),
-                        NoPlayerTextField.getText());
-
-                if (success) {
-                    loadTeamData();
-                    clearTeamFields();
-                    updateDashboardStats();
-                }
-            }
-        });
-
-        // Update Team Button
-        TMUpdateBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                boolean success = teamController.updateTeam(
-                        TeamIDTextField.getText(),
-                        TMTeamNameTextField.getText(),
-                        ManagerTextField.getText(),
-                        NoPlayerTextField.getText());
-
-                if (success) {
-                    loadTeamData();
-                    clearTeamFields();
-                    updateDashboardStats();
-                }
-            }
-        });
-
-        // Delete Team Button
-        TMDeleteBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                boolean success = teamController.deleteTeam(TeamIDTextField.getText());
-
-                if (success) {
-                    loadTeamData();
-                    clearTeamFields();
-                    updateDashboardStats();
-                }
-            }
-        });
-
-        // Read Team Button
-        TMReadBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                loadTeamData();
-            }
-        });
+    
+    private void handleUndo() {
+    if (adminController.getBookingController().undoLastStatusChange()) {
+        JOptionPane.showMessageDialog(this, 
+            "Successfully undone the last booking status change!", 
+            "Undo Successful", 
+            JOptionPane.INFORMATION_MESSAGE);
+        
+        // Update undo button state
+        jButton1.setEnabled(adminController.getBookingController().canUndo());
+        
+        // Update dashboard stats
+        updateDashboardStats();
+        updateUpcomingMatch();
+        
+        // Log activity
+        addRecentActivity("Undid last booking status change");
+    } else {
+        JOptionPane.showMessageDialog(this, 
+            "Nothing to undo!", 
+            "Undo Failed", 
+            JOptionPane.WARNING_MESSAGE);
     }
+}
+    
+    private void setupUndoButton() {
+    jButton1.addActionListener(e -> handleUndo());
+    
+    // Initially disable the button
+    jButton1.setEnabled(adminController.getBookingController().canUndo());
+}
 
-    private void addActionListenersToPlayerButtons() {
-        // Add Player Button
-        PMAddBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                // Get the selected photo path
-                String photoPath = (String) UploadPhoto.getClientProperty("selectedPhoto");
-
-                boolean success = playerController.addPlayer(
-                        PlayerIDTextField.getText(),
-                        PlayerNameTextField.getText(),
-                        PlayerAgeTextField.getText(),
-                        PlayerJerseyNoTextField.getText(),
-                        PlayerPositionTextField.getText(),
-                        PMTeamNameTextField.getText(),
-                        photoPath // Pass the photo path separately
-                );
-
-                if (success) {
-                    loadPlayerData();
-                    clearPlayerFields();
-                    UploadPhoto.putClientProperty("selectedPhoto", null);
-                    photoLabel.setIcon(null);
-                    photoLabel.setText("No Photo");
-                    updateDashboardStats();
-                }
-            }
-        });
-
-        // Update Player Button
-        PMUpdateBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                // Get the newly selected photo path
-                String newPhotoPath = (String) UploadPhoto.getClientProperty("selectedPhoto");
-                String photoPath = newPhotoPath;
-
-                // If no new photo was selected, keep the existing photo
-                if (photoPath == null || photoPath.isEmpty()) {
-                    int selectedRow = PlayerTable.getSelectedRow();
-                    if (selectedRow >= 0) {
-                        // Get existing photo path from the table
-                        Object photoValue = PlayerTable.getValueAt(selectedRow, 6);
-                        if (photoValue != null) {
-                            photoPath = photoValue.toString();
-                        }
-                    }
-                }
-
-                boolean success = playerController.updatePlayer(
-                        PlayerIDTextField.getText(),
-                        PlayerNameTextField.getText(),
-                        PlayerAgeTextField.getText(),
-                        PlayerJerseyNoTextField.getText(),
-                        PlayerPositionTextField.getText(),
-                        PMTeamNameTextField.getText(),
-                        photoPath);
-
-                if (success) {
-                    loadPlayerData();
-                    clearPlayerFields();
-                    UploadPhoto.putClientProperty("selectedPhoto", null);
-                    photoLabel.setIcon(null);
-                    photoLabel.setText("No Photo");
-                    updateDashboardStats();
-                }
-            }
-        });
-
-        // Delete Player Button
-        PMDeleteBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                boolean success = playerController.deletePlayer(PlayerIDTextField.getText());
-
-                if (success) {
-                    loadPlayerData();
-                    clearPlayerFields();
-                    UploadPhoto.putClientProperty("selectedPhoto", null);
-                    photoLabel.setIcon(null);
-                    photoLabel.setText("No Photo");
-                    updateDashboardStats();
-                }
-            }
-        });
-
-        // Read Player Button
-        PMReadBtn.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                loadPlayerData();
-            }
-        });
-    }
-
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated
-    // <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -1033,8 +602,6 @@ public class Admin extends javax.swing.JFrame {
         TMDeleteBtn = new javax.swing.JButton();
         TMReadBtn = new javax.swing.JButton();
         TMSortByComboBox = new javax.swing.JComboBox<>();
-        TMSearchComboBox = new javax.swing.JComboBox<>();
-        jLabel32 = new javax.swing.JLabel();
         jLabel30 = new javax.swing.JLabel();
         TMSearchBtn = new javax.swing.JLabel();
         jLabel53 = new javax.swing.JLabel();
@@ -1074,8 +641,6 @@ public class Admin extends javax.swing.JFrame {
         PMUpdateBtn = new javax.swing.JButton();
         PMDeleteBtn = new javax.swing.JButton();
         PMReadBtn = new javax.swing.JButton();
-        PMSearchComboBox = new javax.swing.JComboBox<>();
-        PMSearchBtn = new javax.swing.JLabel();
         jLabel31 = new javax.swing.JLabel();
         UploadPhoto = new javax.swing.JButton();
         jLabel34 = new javax.swing.JLabel();
@@ -2117,7 +1682,7 @@ public class Admin extends javax.swing.JFrame {
             TMSearchTextFieldActionPerformed(evt);
         }
     });
-    jPanel10.add(TMSearchTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 240, 136, 39));
+    jPanel10.add(TMSearchTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(636, 240, 250, 39));
 
     jLabel12.setFont(new java.awt.Font("Sylfaen", 0, 18)); // NOI18N
     jLabel12.setText("Sort By");
@@ -2165,12 +1730,6 @@ public class Admin extends javax.swing.JFrame {
 
     TMSortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Team ID", "No. Player" }));
     jPanel10.add(TMSortByComboBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 300, 100, 40));
-
-    TMSearchComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Team ID", "Team Name", "Manager", "No. Player" }));
-    jPanel10.add(TMSearchComboBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 240, -1, 37));
-
-    jLabel32.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/search.png"))); // NOI18N
-    jPanel10.add(jLabel32, new org.netbeans.lib.awtextra.AbsoluteConstraints(900, 240, -1, -1));
 
     jLabel30.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/bg2.png"))); // NOI18N
     jPanel10.add(jLabel30, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 200, -1, -1));
@@ -2424,7 +1983,7 @@ public class Admin extends javax.swing.JFrame {
     jPanel9.add(jLabel21, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 280, -1, -1));
 
     PMSearchTextField.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-    jPanel9.add(PMSearchTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(770, 210, 151, 36));
+    jPanel9.add(PMSearchTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(661, 210, 260, 36));
 
     PMSortByComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Player ID", "Age", "Jersey" }));
     PMSortByComboBox.addActionListener(new java.awt.event.ActionListener() {
@@ -2475,6 +2034,11 @@ public class Admin extends javax.swing.JFrame {
     jPanel9.add(PMTeamNameTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 330, 252, 36));
 
     PMAddBtn.setText("Add");
+    PMAddBtn.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            PMAddBtnActionPerformed(evt);
+        }
+    });
     jPanel9.add(PMAddBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(120, 560, 127, 41));
 
     PMUpdateBtn.setText("Update");
@@ -2490,17 +2054,6 @@ public class Admin extends javax.swing.JFrame {
 
     PMReadBtn.setText("Read");
     jPanel9.add(PMReadBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 620, 127, 41));
-
-    PMSearchComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Player ID", "Player Name", "Age", "Jersey", "Position", "Team" }));
-    PMSearchComboBox.addActionListener(new java.awt.event.ActionListener() {
-        public void actionPerformed(java.awt.event.ActionEvent evt) {
-            PMSearchComboBoxActionPerformed(evt);
-        }
-    });
-    jPanel9.add(PMSearchComboBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(660, 210, 92, 39));
-
-    PMSearchBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/search.png"))); // NOI18N
-    jPanel9.add(PMSearchBtn, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 210, -1, -1));
 
     jLabel31.setIcon(new javax.swing.ImageIcon(getClass().getResource("/View/bg1.png"))); // NOI18N
     jPanel9.add(jLabel31, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 190, -1, -1));
@@ -2722,13 +2275,13 @@ public class Admin extends javax.swing.JFrame {
 
     BookingTable.setModel(new javax.swing.table.DefaultTableModel(
         new Object [][] {
-            {null, null, null, null, null, null, null, null, null},
-            {null, null, null, null, null, null, null, null, null},
-            {null, null, null, null, null, null, null, null, null},
-            {null, null, null, null, null, null, null, null, null}
+            {null, null, null, null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null, null, null, null}
         },
         new String [] {
-            "Booking ID", "Name", "Date", "Time", "Ground no", "Team 1", "Team 2", "Payment Status", "Action"
+            "Name", "Uername", "Booking ID", "Date", "Time", "Ground no", "Team 1", "Team 2", "Payment Status", "Action"
         }
     ));
     jScrollPane4.setViewportView(BookingTable);
@@ -2739,6 +2292,11 @@ public class Admin extends javax.swing.JFrame {
     jPanel12.add(jLabel55, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 0, 1080, 180));
 
     jButton1.setText("Undo");
+    jButton1.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton1ActionPerformed(evt);
+        }
+    });
     jPanel12.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(940, 230, -1, -1));
 
     Main4.add(jPanel12, "card2");
@@ -3495,199 +3053,82 @@ dateChooserPanel1.addSelectionChangedListener(new datechooser.events.SelectionCh
     pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void LoginBtnActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_LoginBtnActionPerformed
-        // Get user input
-        String username = LoginUsername.getText().trim();
-        String password = new String(LoginPassword.getPassword());
-
-        // Basic validation
-        if (username.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter username",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter password",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Call controller to login
-        User user = userController.loginUser(username, password);
-
-        if (user != null) {
-            // Login successful
-            JOptionPane.showMessageDialog(this, "Login successful!");
-
-            // Clear form
-            LoginUsername.setText("");
-            LoginPassword.setText("");
-
-            // Switch to Dashboard based on user role
-            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
-
-            if (username.endsWith(".admin")) {
-                // Admin Dashboard
-                isAdmin = true;
-                cardLayout.show(jPanel1, "card3");
-            } else {
-                // User Dashboard
-                isAdmin = false;
-                cardLayout.show(jPanel1, "card11");
-            }
-
-            // Set welcome message
-            setWelcomeMessage(user.getFirstName());
-        } else {
-            JOptionPane.showMessageDialog(this,
-                    "Invalid username or password",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            System.out.println("Testing");
-            System.out.println(username);
-            System.out.println(password);
-        }
-    }// GEN-LAST:event_LoginBtnActionPerformed
-
-    private void LoginPasswordActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_LoginPasswordActionPerformed
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-    }// GEN-LAST:event_LoginPasswordActionPerformed
+    }//GEN-LAST:event_jButton1ActionPerformed
 
-    private void LoginUsernameActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_LoginUsernameActionPerformed
+    private void PMAddBtnActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_LoginUsernameActionPerformed
+    }
 
-    private void TMTeamNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_TMTeamNameTextFieldActionPerformed
+    private void LoginBtnActionPerformed(java.awt.event.ActionEvent evt) {
+        // Logic moved to AdminController
+    }
+
+    private void LoginPasswordActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_TMTeamNameTextFieldActionPerformed
+    }
 
-    private void PMSortByComboBoxActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_PMSortByComboBoxActionPerformed
+    private void LoginUsernameActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_PMSortByComboBoxActionPerformed
+    }
 
-    private void SignUpUsernameActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_SignUpUsernameActionPerformed
+    private void TMTeamNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_SignUpUsernameActionPerformed
+    }
 
-    private void SignUpPasswordActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_SignUpPasswordActionPerformed
+    private void PMSortByComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_SignUpPasswordActionPerformed
+    }
 
-    private void SignUpBtnActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_SignUpBtnActionPerformed
-        // Get user input
-        String username = SignUpUsername.getText().trim();
-        String password = new String(SignUpPassword.getPassword());
-        String retypePassword = new String(SignUpRetypePw.getPassword());
-        String firstName = SignUpFirstName.getText().trim();
-        String lastName = SignUpLastName.getText().trim();
-        String dob = getDateFromChooser();
-
-        // Validation
-        if (username.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter username",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter password",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (!password.equals(retypePassword)) {
-            JOptionPane.showMessageDialog(this,
-                    "Password and Retype Password do not match",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (firstName.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter first name",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (lastName.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter last name",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (dob.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please select date of birth",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Call controller to register
-        boolean success = userController.registerUser(username, password,
-                retypePassword, firstName, lastName, dob);
-
-        if (success) {
-            // Registration successful
-            JOptionPane.showMessageDialog(this,
-                    "Registration successful! You can now login.");
-
-            // Clear form
-            SignUpUsername.setText("");
-            SignUpPassword.setText("");
-            SignUpRetypePw.setText("");
-            SignUpFirstName.setText("");
-            SignUpLastName.setText("");
-            clearDateChooser();
-
-            // Switch to login screen
-            CardLayout cardLayout = (CardLayout) jPanel1.getLayout();
-            cardLayout.show(jPanel1, "card1");
-        } else {
-            // Registration failed
-            JOptionPane.showMessageDialog(this,
-                    "Registration failed. Username might already exist.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }// GEN-LAST:event_SignUpBtnActionPerformed
-
-    private void SignUpFirstNameActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_SignUpFirstNameActionPerformed
+    private void SignUpUsernameActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_SignUpFirstNameActionPerformed
+    }
 
-    private void SignUpLastNameActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_SignUpLastNameActionPerformed
+    private void SignUpPasswordActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_SignUpLastNameActionPerformed
+    }
 
-    private void SignUpRetypePwActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_SignUpRetypePwActionPerformed
+    private void SignUpBtnActionPerformed(java.awt.event.ActionEvent evt) {
+        // Logic moved to AdminController
+    }
+
+    private void SignUpFirstNameActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_SignUpRetypePwActionPerformed
+    }
 
-    private void PMUpdateBtnActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_PMUpdateBtnActionPerformed
+    private void SignUpLastNameActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_PMUpdateBtnActionPerformed
+    }
 
-    private void ManagerTextFieldActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_ManagerTextFieldActionPerformed
+    private void SignUpRetypePwActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_ManagerTextFieldActionPerformed
+    }
 
-    private void TMSearchTextFieldActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_TMSearchTextFieldActionPerformed
+    private void PMUpdateBtnActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_TMSearchTextFieldActionPerformed
+    }
 
-    private void PMSearchComboBoxActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_PMSearchComboBoxActionPerformed
+    private void ManagerTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_PMSearchComboBoxActionPerformed
+    }
 
-    private void dateChooserPanel1OnCommit(datechooser.events.CommitEvent evt) {// GEN-FIRST:event_dateChooserPanel1OnCommit
+    private void TMSearchTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
-    }// GEN-LAST:event_dateChooserPanel1OnCommit
+    }
 
-    private void dateChooserPanel1OnSelectionChange(datechooser.events.SelectionChangedEvent evt) {// GEN-FIRST:event_dateChooserPanel1OnSelectionChange
+    private void dateChooserPanel1OnCommit(datechooser.events.CommitEvent evt) {
+        // TODO add your handling code here:
+    }
+
+    private void dateChooserPanel1OnSelectionChange(datechooser.events.SelectionChangedEvent evt) {
         try {
             java.util.Calendar selectedDate = dateChooserPanel1.getSelectedDate();
             if (selectedDate != null) {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 String dateStr = sdf.format(selectedDate.getTime());
 
-                LinkedList<Booking> dayBookings = bookingController.getBookingsForDate(dateStr);
+                LinkedList<Booking> dayBookings = adminController.getBookingController().getBookingsForDate(dateStr);
 
                 if (dayBookings.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "No accepted bookings for " + dateStr, "Schedule",
@@ -3707,10 +3148,10 @@ dateChooserPanel1.addSelectionChangedListener(new datechooser.events.SelectionCh
         } catch (Exception e) {
             System.err.println("Error handling date selection: " + e.getMessage());
         }
-    }// GEN-LAST:event_dateChooserPanel1OnSelectionChange
+    }
 
-    private void UploadPhotoActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_UploadPhotoActionPerformed
-        // TODO add your handling code here:
+    private void UploadPhotoActionPerformed(java.awt.event.ActionEvent evt) {
+       
     }
 
     public static void main(String args[]) {
@@ -3725,7 +3166,7 @@ dateChooserPanel1.addSelectionChangedListener(new datechooser.events.SelectionCh
             logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
 
-        /* Create and display the form */
+        // Create and display the form 
         java.awt.EventQueue.invokeLater(() -> new Admin().setVisible(true));
 
     }
@@ -3798,8 +3239,6 @@ dateChooserPanel1.addSelectionChangedListener(new datechooser.events.SelectionCh
     private javax.swing.JButton PMAddBtn;
     private javax.swing.JButton PMDeleteBtn;
     private javax.swing.JButton PMReadBtn;
-    private javax.swing.JLabel PMSearchBtn;
-    private javax.swing.JComboBox<String> PMSearchComboBox;
     private javax.swing.JTextField PMSearchTextField;
     private javax.swing.JComboBox<String> PMSortByComboBox;
     private javax.swing.JTextField PMTeamNameTextField;
@@ -3834,7 +3273,6 @@ dateChooserPanel1.addSelectionChangedListener(new datechooser.events.SelectionCh
     private javax.swing.JButton TMDeleteBtn;
     private javax.swing.JButton TMReadBtn;
     private javax.swing.JLabel TMSearchBtn;
-    private javax.swing.JComboBox<String> TMSearchComboBox;
     private javax.swing.JTextField TMSearchTextField;
     private javax.swing.JComboBox<String> TMSortByComboBox;
     private javax.swing.JTextField TMTeamNameTextField;
@@ -3880,7 +3318,6 @@ dateChooserPanel1.addSelectionChangedListener(new datechooser.events.SelectionCh
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel30;
     private javax.swing.JLabel jLabel31;
-    private javax.swing.JLabel jLabel32;
     private javax.swing.JLabel jLabel33;
     private javax.swing.JLabel jLabel34;
     private javax.swing.JLabel jLabel35;
@@ -3953,4 +3390,139 @@ dateChooserPanel1.addSelectionChangedListener(new datechooser.events.SelectionCh
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     // End of variables declaration//GEN-END:variables
+
+    // Getters for AdminController
+
+    public javax.swing.JButton getTMAddBtn() {
+        return TMAddBtn;
+    }
+
+    public javax.swing.JButton getTMUpdateBtn() {
+        return TMUpdateBtn;
+    }
+
+    public javax.swing.JButton getTMDeleteBtn() {
+        return TMDeleteBtn;
+    }
+
+    public javax.swing.JButton getTMReadBtn() {
+        return TMReadBtn;
+    }
+
+    public javax.swing.JButton getPMAddBtn() {
+        return PMAddBtn;
+    }
+
+    public javax.swing.JButton getPMUpdateBtn() {
+        return PMUpdateBtn;
+    }
+
+    public javax.swing.JButton getPMDeleteBtn() {
+        return PMDeleteBtn;
+    }
+
+    public javax.swing.JButton getPMReadBtn() {
+        return PMReadBtn;
+    }
+
+    public javax.swing.JButton getUploadPhotoBtn() {
+        return UploadPhoto;
+    }
+
+    public javax.swing.JToggleButton getLoginBtn() {
+        return LoginBtn;
+    }
+
+    public javax.swing.JToggleButton getSignUpBtn() {
+        return SignUpBtn;
+    }
+
+    public javax.swing.JTextField getTeamIDTextField() {
+        return TeamIDTextField;
+    }
+
+    public javax.swing.JTextField getTMTeamNameTextField() {
+        return TMTeamNameTextField;
+    }
+
+    public javax.swing.JTextField getManagerTextField() {
+        return ManagerTextField;
+    }
+
+    public javax.swing.JTextField getNoPlayerTextField() {
+        return NoPlayerTextField;
+    }
+
+    public javax.swing.JTextField getPlayerIDTextField() {
+        return PlayerIDTextField;
+    }
+
+    public javax.swing.JTextField getPlayerNameTextField() {
+        return PlayerNameTextField;
+    }
+
+    public javax.swing.JTextField getPlayerAgeTextField() {
+        return PlayerAgeTextField;
+    }
+
+    public javax.swing.JTextField getPlayerJerseyNoTextField() {
+        return PlayerJerseyNoTextField;
+    }
+
+    public javax.swing.JTextField getPlayerPositionTextField() {
+        return PlayerPositionTextField;
+    }
+
+    public javax.swing.JTextField getPMTeamNameTextField() {
+        return PMTeamNameTextField;
+    }
+
+    public javax.swing.JTable getTeamTable() {
+        return TeamTable;
+    }
+
+    public javax.swing.JTable getPlayerTable() {
+        return PlayerTable;
+    }
+
+    public javax.swing.JTable getBookingTable() {
+        return BookingTable;
+    }
+
+    public javax.swing.JLabel getPhotoLabel() {
+        return photoLabel;
+    }
+
+    public javax.swing.JComboBox<String> getTMSortByComboBox() {
+        return TMSortByComboBox;
+    }
+
+    public javax.swing.JComboBox<String> getPMSortByComboBox() {
+        return PMSortByComboBox;
+    }
+
+    public javax.swing.JTextField getTMSearchTextField() {
+        return TMSearchTextField;
+    }
+
+    public javax.swing.JTextField getPMSearchTextField() {
+        return PMSearchTextField;
+    }
+    
+    public javax.swing.JButton getUndoButton() {
+        return jButton1;
+    }
+
+    public String getDateOfBirth() {
+        if (DateOfBirth.getSelectedDate() != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            return sdf.format(DateOfBirth.getSelectedDate().getTime());
+        }
+        return "";
+    }
+
+    public javax.swing.JPanel getMainPanel() {
+        return jPanel1;
+    }
+
 }

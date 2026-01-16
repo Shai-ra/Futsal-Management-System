@@ -1,13 +1,43 @@
 package Model;
 
 import java.util.LinkedList;
+import java.util.Stack;
 
 public class BookingManager {
     private LinkedList<Booking> bookings;
+    private Stack<BookingStateMemento> undoStack;
+    
+    // Inner class to store booking state for undo
+    private static class BookingStateMemento {
+        private final String bookingId;
+        private final String previousStatus;
+        private final String previousDeclineReason;
 
+        public BookingStateMemento(String bookingId, String previousStatus, String previousDeclineReason) {
+            this.bookingId = bookingId;
+            this.previousStatus = previousStatus;
+            this.previousDeclineReason = previousDeclineReason;
+        }
+
+        public String getBookingId() {
+            return bookingId;
+        }
+
+        public String getPreviousStatus() {
+            return previousStatus;
+        }
+
+        public String getPreviousDeclineReason() {
+            return previousDeclineReason;
+        }
+    }
+    
+    
     public BookingManager() {
         this.bookings = new LinkedList<>();
+        this.undoStack = new Stack<>();
         prepareInitialBookingData();
+        
     }
 
     private void prepareInitialBookingData() {
@@ -44,12 +74,42 @@ public class BookingManager {
     public boolean updateBookingStatus(String bookingId, String status, String reason) {
         for (Booking b : bookings) {
             if (b.getBookingId().equals(bookingId)) {
+                // Save current state before changing
+                BookingStateMemento memento = new BookingStateMemento(
+                    bookingId, 
+                    b.getStatus(), 
+                    b.getDeclineReason()
+                );
+                undoStack.push(memento);
+                
+                // Update status 
                 b.setStatus(status);
                 b.setDeclineReason(reason);
                 return true;
             }
         }
         return false;
+    }
+    
+    public boolean undoLastStatusChange() {
+        if (undoStack.isEmpty()) {
+            return false;
+        }
+    BookingStateMemento memento = undoStack.pop();
+    
+    for (Booking b : bookings) {
+            if (b.getBookingId().equals(memento.getBookingId())) {
+                b.setStatus(memento.getPreviousStatus());
+                b.setDeclineReason(memento.getPreviousDeclineReason());
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    public boolean canUndo() {
+        return !undoStack.isEmpty();
     }
 
     public Booking getBookingById(String id) {

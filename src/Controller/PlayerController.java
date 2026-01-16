@@ -19,7 +19,7 @@ public class PlayerController {
         this.playerManager = new PlayerManager();
     }
 
-    // Photo upload and display methods remain the same...
+   
     public String uploadPhoto() {
         JFileChooser fileChooser = new JFileChooser();
 
@@ -254,7 +254,7 @@ public class PlayerController {
         }
     }
 
-    // Other methods...
+ 
     public Player getPlayerById(String playerId) {
         return playerManager.getPlayerById(playerId);
     }
@@ -292,4 +292,5 @@ public class PlayerController {
     public boolean playerExists(String playerId) {
         return playerManager.playerExists(playerId);
     }
+    
 }

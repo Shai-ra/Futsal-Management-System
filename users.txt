@@ -7,3 +7,4 @@ home,54321,Shaira,Gurung,04-01-2026
 ho,09876,home,grp,04-01-2026
 uh,54321,shaira,gurung,09-01-2026
 yh,54321,shaira,Guring,09-01-2026
+kim.admin,54321,bo,ha,2026-01-15

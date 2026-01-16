@@ -21,12 +21,24 @@ public class Team {
         this.teamId = teamId; 
     }
     
-    public String getTeamName() { return teamName; }
-    public void setTeamName(String teamName) { this.teamName = teamName; }
+    public String getTeamName() {
+        return teamName;
+    }
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
+    }
     
-    public String getManager() { return manager; }
-    public void setManager(String manager) { this.manager = manager; }
+    public String getManager() { 
+        return manager;
+    }
+    public void setManager(String manager) { 
+        this.manager = manager; 
+    }
     
-    public int getNoOfPlayers() { return noOfPlayers; }
-    public void setNoOfPlayers(int noOfPlayers) { this.noOfPlayers = noOfPlayers; }
+    public int getNoOfPlayers() {
+        return noOfPlayers; 
+    }
+    public void setNoOfPlayers(int noOfPlayers) {
+        this.noOfPlayers = noOfPlayers; 
+    }
 }

@@ -92,7 +92,7 @@ public class UserManager {
                     User user = new User(parts[0], parts[1], parts[2], parts[3], parts[4]);
                     users.add(user); // Add to LinkedList
                 }
-            }
+            } 
             reader.close();
         } catch (IOException e) {
             e.printStackTrace();

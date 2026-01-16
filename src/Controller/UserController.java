@@ -47,7 +47,6 @@ public class UserController {
         }
 
         // Check for admin privilege (ends with .admin)
-        // Check for admin privilege (ends with .admin)
         if (!username.endsWith(".admin")) {
             return null;
         }
@@ -59,4 +58,6 @@ public class UserController {
     public boolean userExists(String username) {
         return userManager.userExists(username);
     }
+    
+    
 }

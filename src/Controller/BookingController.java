@@ -25,6 +25,14 @@ public class BookingController {
         return bookingManager.updateBookingStatus(id, status, reason);
     }
 
+    public boolean undoLastStatusChange() {
+        return bookingManager.undoLastStatusChange();
+    }
+
+    public boolean canUndo() {
+        return bookingManager.canUndo();
+    }
+    
     public LinkedList<Booking> getBookingsForDate(String date) {
         return bookingManager.getBookingsForDate(date);
     }

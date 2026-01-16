@@ -128,7 +128,6 @@ public class TeamController {
         }
     }
 
-    // Other methods...
     public Team getTeamById(String teamId) {
         return teamManager.getTeamById(teamId);
     }
